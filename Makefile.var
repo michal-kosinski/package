@@ -1,0 +1,23 @@
+
+LOCAL=`basename $(REMOTE)`
+BUILDDIR=`pwd`/build/`basename $(REMOTE) | sed s/"\.src"//g | sed s/.tar.gz//g | sed s/.tar.bz2//g | sed s/.tgz//g`
+MAKE=`if [ -f /usr/bin/gmake ]; then echo gmake; else echo make; fi`
+FTP=`if [ -f /usr/bin/wget ]; then echo wget; else echo ftp; fi`
+DESTDIR=`cd ../.. ; pwd`/install
+
+
+DEFAULT_FLAGS=	--prefix=/usr \
+	        --exec-prefix=/usr \
+	        --bindir=/usr/bin \
+	        --sbindir=/usr/sbin \
+	        --libexecdir=/usr/libexec \
+		--infodir=/usr/share/info \
+	        --datadir=/usr/share \
+	        --sysconfdir=/etc \
+	        --localstatedir=/var \
+	        --libdir=/usr/lib \
+	        --includedir=/usr/include \
+	        --mandir=/usr/share/man
+	
+
+

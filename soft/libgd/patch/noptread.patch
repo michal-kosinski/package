@@ -1,0 +1,20 @@
+--- gd-2.0.33/configure	Thu Nov  4 00:14:47 2004
++++ gd-2.0.33.1/configure	Tue Nov 21 11:27:41 2006
+@@ -12307,7 +12307,7 @@
+   ac_status=$?
+   echo "$as_me:$LINENO: \$? = $ac_status" >&5
+   (exit $ac_status); }; }; then
+-  acx_pthread_ok=yes
++  acx_pthread_ok=no
+ else
+   echo "$as_me: failed program was:" >&5
+ sed 's/^/| /' conftest.$ac_ext >&5
+@@ -12444,7 +12444,7 @@
+   ac_status=$?
+   echo "$as_me:$LINENO: \$? = $ac_status" >&5
+   (exit $ac_status); }; }; then
+-  acx_pthread_ok=yes
++  acx_pthread_ok=no
+ else
+   echo "$as_me: failed program was:" >&5
+ sed 's/^/| /' conftest.$ac_ext >&5

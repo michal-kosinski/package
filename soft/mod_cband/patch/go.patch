@@ -1,0 +1,147 @@
+Only in mod-cband-0.9.7.2.1: Makefile
+diff -dur mod-cband-0.9.7.2/Makefile.in mod-cband-0.9.7.2.1/Makefile.in
+--- mod-cband-0.9.7.2/Makefile.in	Thu Mar  2 18:08:30 2006
++++ mod-cband-0.9.7.2.1/Makefile.in	Thu Mar  2 18:10:22 2006
+@@ -25,6 +25,8 @@
+ SRC=src/mod_cband.c
+ OBJ=src/.libs/mod_cband.so
+ 
++all: $(OBJ)
++
+ $(OBJ): $(SRC)
+ 	@echo 
+ 	$(APXS) $(APXS_OPTS) -c $(SRC)
+Only in mod-cband-0.9.7.2.1: config.log
+Only in mod-cband-0.9.7.2.1: config.status
+Only in mod-cband-0.9.7.2.1/src: .libs
+diff -dur mod-cband-0.9.7.2/src/mod_cband.c mod-cband-0.9.7.2.1/src/mod_cband.c
+--- mod-cband-0.9.7.2/src/mod_cband.c	Fri Feb  3 18:37:40 2006
++++ mod-cband-0.9.7.2.1/src/mod_cband.c	Thu Mar  2 17:37:08 2006
+@@ -59,11 +59,11 @@
+ 
+ #include "mod_cband.h"
+ 
+-#ifdef __FreeBSD__	// no truncf on FreeBSD
++//#ifdef __FreeBSD__	// no truncf on FreeBSD
+ inline float truncf (float d) {
+     return (d < 0) ? -floorf(-d) : floorf(d);
+ }
+-#endif
++//#endif
+ 
+ static mod_cband_config_header *config = NULL;
+ static const char mod_cband_filter_name[] = "CBAND_FILTER";
+@@ -2269,13 +2269,13 @@
+     slice_limit = mod_cband_get_slice_limit(entry->shmem_data->total_usage.start_time, entry->refresh_time, entry->slice_len, entry->virtual_limit);
+     mod_cband_status_print_limit(r, entry->virtual_limit, (unsigned long)(virtual_usage->total_bytes / entry->virtual_limit_mult),
+ 	unit, entry->virtual_limit_mult, slice_limit);
+-
++/*
+     for (i = 0; i < DST_CLASS; i++) {
+         slice_limit = mod_cband_get_slice_limit(entry->shmem_data->total_usage.start_time, entry->refresh_time, entry->slice_len, entry->virtual_class_limit[i]);
+ 	mod_cband_status_print_limit(r, entry->virtual_class_limit[i], (unsigned long)(virtual_usage->class_bytes[i] / entry->virtual_class_limit_mult[i]),
+ 	    unit, entry->virtual_class_limit_mult[i], slice_limit);
+     }
+-
++*/
+     mod_cband_update_speed_lock(entry->shmem_data, 0, 0, -1);
+     mod_cband_get_speed_lock(entry->shmem_data, &bps, &rps);
+     mod_cband_status_print_speed(r, entry->shmem_data->curr_speed.kbps, bps / 1024);
+@@ -2311,13 +2311,13 @@
+     slice_limit = mod_cband_get_slice_limit(entry_user->shmem_data->total_usage.start_time, entry_user->refresh_time, entry_user->slice_len, entry_user->user_limit);
+     mod_cband_status_print_limit(r, entry_user->user_limit, (unsigned long)(user_usage->total_bytes / entry_user->user_limit_mult),
+ 	unit, entry_user->user_limit_mult, slice_limit);
+-
++/*
+     for (i = 0; i < DST_CLASS; i++) {
+         slice_limit = mod_cband_get_slice_limit(entry_user->shmem_data->total_usage.start_time, entry_user->refresh_time, entry_user->slice_len, entry_user->user_class_limit[i]);
+ 	mod_cband_status_print_limit(r, entry_user->user_class_limit[i], (unsigned long)(user_usage->class_bytes[i] / entry_user->user_class_limit_mult[i]),
+ 	    unit, entry_user->user_class_limit_mult[i], slice_limit);
+     }
+-
++*/
+     mod_cband_update_speed_lock(entry_user->shmem_data, 0, 0, -1);
+     mod_cband_get_speed_lock(entry_user->shmem_data, &bps, &rps);
+     mod_cband_status_print_speed(r, entry_user->shmem_data->curr_speed.kbps, bps / 1024);
+@@ -2583,7 +2583,7 @@
+     ap_rputs(mod_cband_status_handler_style, r);
+     ap_rputs("</head>\n", r);
+     ap_rputs("<body>\n", r);
+-    ap_rputs("<h1 style=\"text-align: center\"><a href=\"http://cband.linux.pl\">mod_cband</a> status page</h1>\n", r);
++    ap_rputs("<h1 style=\"text-align: center\">Transfer status page</h1>\n", r);
+     ap_rprintf(r, "<h2 style=\"text-align: center\">Server uptime %s</h2>\n", mod_cband_create_time(r->pool, uptime));
+     ap_rputs("<div class=\"section\">", r);
+     ap_rputs("<h2 style=\"display: inline;\">Virtual hosts</h2>\n", r);
+@@ -2613,10 +2613,10 @@
+ 	    entry_class = entry_class->next;
+             i++;
+ 	}
+-	
++/*	
+ 	for (; i < DST_CLASS; i++)
+ 	    ap_rprintf(r,"<td>Class %d<br/>Limit/Slice/Used</td>\n",i);
+-		
++*/		
+ 	ap_rprintf(r,"<td>kbps<br/>Limit/Current</td>\n");
+ 	ap_rprintf(r,"<td>rps<br/>Limit/Current</td>\n");
+ 	ap_rprintf(r,"<td>Connections<br/>Limit/Current</td>\n");
+@@ -2692,10 +2692,10 @@
+ 	    entry_class = entry_class->next;
+             i++;
+ 	}
+-	
++/*	
+ 	for (; i < DST_CLASS; i++)
+ 	    ap_rprintf(r,"<td>Class %d<br/>Limit/Slice/Used</td>\n",i);
+-
++*/
+ 	ap_rprintf(r,"<td>kbps<br/>Limit/Current</td>\n");
+ 	ap_rprintf(r,"<td>rps<br/>Limit/Current</td>\n");
+ 	ap_rprintf(r,"<td>Connections<br/>Limit/Current</td>\n");
+@@ -2707,7 +2707,7 @@
+ 	
+ 	    while(entry_user != NULL) {
+ 		mod_cband_check_user_refresh(entry_user, sec);
+-		mod_cband_status_print_user_row(r, entry_user, handler_type, refresh, unit);
++//		mod_cband_status_print_user_row(r, entry_user, handler_type, refresh, unit);
+ 		users_number++;
+ 		
+ 		if ((entry_user = entry_user->next) == NULL)
+@@ -2716,10 +2716,10 @@
+ 	} else {
+ 	    if (entry_user_me != NULL) {
+ 	        mod_cband_check_user_refresh(entry_user_me, sec);
+-		mod_cband_status_print_user_row(r, entry_user_me, handler_type, refresh, unit);
++//		mod_cband_status_print_user_row(r, entry_user_me, handler_type, refresh, unit);
+ 	    }
+ 	}
+-	
++
+ 	ap_rputs("</table>\n", r);
+     }
+ 
+diff -dur mod-cband-0.9.7.2/src/mod_cband.h mod-cband-0.9.7.2.1/src/mod_cband.h
+--- mod-cband-0.9.7.2/src/mod_cband.h	Fri Feb  3 18:29:12 2006
++++ mod-cband-0.9.7.2.1/src/mod_cband.h	Thu Mar  2 16:43:00 2006
+@@ -72,12 +72,12 @@
+ /* union semun is defined by including <sys/sem.h> */
+ #else
+ /* according to X/OPEN we have to define it ourselves */
+-union semun {
+-    int val;
+-    struct semid_ds *buf;
+-    unsigned short *array;
+-    struct seminfo *__buf;
+-};					            
++//union semun {
++//    int val;
++//    struct semid_ds *buf;
++//    unsigned short *array;
++//    struct seminfo *__buf;
++//};					            
+ #endif
+ 
+ typedef struct mod_cband_virtualhost_config_entry mod_cband_virtualhost_config_entry;
+Only in mod-cband-0.9.7.2.1/src: mod_cband.la
+Only in mod-cband-0.9.7.2.1/src: mod_cband.lo
+Only in mod-cband-0.9.7.2.1/src: mod_cband.slo

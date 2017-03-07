@@ -1,0 +1,16 @@
+--- samba-3.0.21b/source/include/includes.h	Thu Jul 28 15:19:49 2005
++++ samba-3.0.21b/source/include/includes.h.new	Wed Aug 31 17:00:56 2005
+@@ -795,13 +795,6 @@
+ #  endif
+ #endif
+ 
+-#ifndef HAVE_STRUCT_TIMESPEC
+-struct timespec {
+-	time_t tv_sec;            /* Seconds.  */
+-	long tv_nsec;           /* Nanoseconds.  */
+-};
+-#endif
+-
+ #ifndef MIN
+ #define MIN(a,b) ((a)<(b)?(a):(b))
+ #endif

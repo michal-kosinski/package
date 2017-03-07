@@ -1,0 +1,12 @@
+--- /etc/gettytab	Tue Oct  4 13:59:17 2005
++++ /etc/gettytab.new	Tue Oct  4 14:00:04 2005
+@@ -112,7 +112,8 @@
+ 	:fd@:nd@:cd@:rw:sp#9600:
+ 
+ P|Pc|Pc console:\
+-	:np:sp#9600:
++	:np:sp#9600:\
++	:cl=\E[H\E[2J:
+ 
+ # 8 bit clean Sun console
+ S|suncons|Sun Console:\

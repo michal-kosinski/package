@@ -1,0 +1,28 @@
+# This example assumes an internet connection with available bandwidth of 3Mb downstream and 512Kb upstream
+
+ext_if        =  "rl0"
+external_addr =  "1.2.3.4"
+int_if        =  "rl1"
+internal_net  =  "192.168.0.0/24"
+proxy_server  =  "192.168.0.10"
+    
+altq on $ext_if bandwidth 512Kb cbq queue { windows_out, trusted_out }
+	queue windows_out bandwidth 20%
+	queue trusted_out bandwidth 80%
+altq on $int_if bandwidth 3Mb cbq queue { windows_in, trusted_in }
+	queue windows_in bandwidth 20%
+	queue trusted_in bandwidth 80%
+
+rdr on $int_if inet proto tcp from $internal_net os "Windows" to any port www -> $proxy_server port 3128
+
+nat on $ext_if from $internal_net to any -> ($ext_if)
+
+pass out quick on $ext_if inet proto tcp from $proxy_server to any port www keep state queue windows_out
+pass out quick on $ext_if inet proto tcp from $internal_net os "Windows" to any keep state queue windows_out
+pass out quick on $ext_if inet proto tcp from $internal_net os "unknown" to any keep state queue windows_out
+pass out on $ext_if inet proto tcp from $internal_net to any keep state queue trusted_out
+pass out quick on $int_if proto tcp from any to $proxy_server queue windows_in
+pass out on $int_if proto tcp from any to $internal_net queue trusted_in
+
+#bittorrent_ports = "6881:6999"
+#pass out quick on $int_if proto { tcp, udp } from any to any port $bittorrent_ports queue windows_in

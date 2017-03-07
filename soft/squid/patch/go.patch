@@ -1,0 +1,12 @@
+diff -dur squid-2.6.STABLE6/src/defines.h squid-2.6.STABLE6.new/src/defines.h
+--- squid-2.6.STABLE6/src/defines.h	Sat Mar 26 03:50:52 2005
++++ squid-2.6.STABLE6.new/src/defines.h	Fri May 12 16:04:47 2006
+@@ -41,7 +41,7 @@
+ #define FALSE 0
+ #endif
+ 
+-#define ACL_NAME_SZ 32
++#define ACL_NAME_SZ 64
+ #define BROWSERNAMELEN 128
+ 
+ #define ACL_SUNDAY	0x01

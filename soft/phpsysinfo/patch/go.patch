@@ -1,0 +1,35 @@
+--- config.php.new	Wed Nov 30 06:14:49 2005
++++ config.php.new.1	Mon Feb 20 16:27:47 2006
+@@ -33,13 +33,13 @@
+ $webpath = "";
+ 
+ // define the default lng and template here
+-$default_lng='en';
++$default_lng='pl';
+ $default_template='classic';
+ 
+ // hide language and template picklist
+ // false = display picklist
+ // true = do not display picklist
+-$hide_picklist = false;
++$hide_picklist = true;
+ 
+ // define the motherboard monitoring program here
+ // we support four programs so far
+@@ -54,7 +54,7 @@
+ // $sensor_program = "hwsensors";
+ // $sensor_program = "mbmon";
+ // $sensor_program = "mbm5";
+-$sensor_program = "";
++$sensor_program = "hwsensors";
+ 
+ // show mount point
+ // true = show mount point
+@@ -77,6 +77,6 @@
+ // show a graph for current cpuload
+ // true = displayed, but it's a performance hit (because we have to wait to get a value, 1 second)
+ // false = will not be displayed
+-$loadbar = false;
++$loadbar = true;
+ 
+ ?>

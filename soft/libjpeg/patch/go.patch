@@ -1,0 +1,23 @@
+diff jpegsrc.v6b/makefile.cfg jpegsrc.v6b.1/makefile.cfg
+--- jpegsrc.v6b/makefile.cfg	Sat Mar 21 20:08:57 1998
++++ jpegsrc.v6b.1/makefile.cfg	Mon Apr  5 20:22:06 2004
+@@ -9,8 +9,8 @@
+ VPATH = @srcdir@
+ 
+ # Where to install the programs and man pages.
+-prefix = @prefix@
+-exec_prefix = @exec_prefix@
++prefix = `pwd`/../../install/usr
++exec_prefix = `pwd`/../../install/usr
+ bindir = $(exec_prefix)/bin
+ libdir = $(exec_prefix)/lib
+ includedir = $(prefix)/include
+@@ -17,7 +17,7 @@
+ binprefix =
+ manprefix =
+ manext = 1
+-mandir = $(prefix)/man/man$(manext)
++mandir = $(prefix)/share/man/man$(manext)
+ 
+ # The name of your C compiler:
+ CC= @CC@

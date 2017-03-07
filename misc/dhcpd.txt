@@ -1,0 +1,36 @@
+beefcake:~# cat /etc/dhcp3/dhcpd.conf
+## If hardware address begins with 00:FF, the client is an
+## openvpn tap adapter, and we do not want to assign a
+## default gateway or dns server.  Assign then to a special
+## subclass and configure a pool which does not hand out
+## these parameters.
+
+class "openvpn" {
+     match if substring (hardware, 1, 2) = 00:FF;
+ }
+## end class declaration
+
+## subnet for br0
+
+authoritative;
+subnet 172.16.0.0 netmask 255.255.255.0 {
+always-broadcast on;
+max-lease-time 3600;
+default-lease-time 1800;
+option domain-name "ezone.net";
+option subnet-mask 255.255.255.0;
+
+pool {
+     deny members of "openvpn";
+     range 172.16.0.150 172.16.0.254;
+     option routers 172.16.0.1;
+     option domain-name-servers 172.16.0.1;
+     option tftp-server-name "172.16.0.209";
+     }
+
+pool {
+     allow members of "openvpn";
+     range 172.16.0.100 172.16.0.125;
+     }
+
+}

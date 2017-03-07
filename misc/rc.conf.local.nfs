@@ -1,0 +1,2 @@
+nfs_server=YES          # see sysctl.conf for nfs client configuration
+portmap=YES             # Note: inetd(8) rpc services need portmap too

@@ -1,0 +1,135 @@
+Index: dev/ic/aac.c
+===================================================================
+RCS file: /cvs/src/sys/dev/ic/aac.c,v
+retrieving revision 1.19
+diff -u -r1.19 aac.c
+--- dev/ic/aac.c	2004/03/20 03:58:09	1.19
++++ dev/ic/aac.c	2005/02/09 11:27:03
+@@ -83,7 +83,7 @@
+ void	aac_enqueue_ccb(struct aac_softc *, struct aac_ccb *);
+ int	aac_enqueue_fib(struct aac_softc *, int, struct aac_ccb *);
+ void	aac_eval_mapping(u_int32_t, int *, int *, int *);
+-int	aac_exec_ccb(struct aac_ccb *);
++void	aac_build_ccb(struct aac_ccb *);
+ void	aac_free_ccb(struct aac_softc *, struct aac_ccb *);
+ struct aac_ccb *aac_get_ccb(struct aac_softc *, int);
+ #if 0
+@@ -729,15 +729,14 @@
+ 				}
+ 			}
+ 
+-			ccb = aac_get_ccb(sc, xs->flags);
+-
+-			/*
+-			 * We are out of commands, try again in a little while.
+-			 */
+-			if (ccb == NULL) {
+-				xs->error = XS_DRIVER_STUFFUP;
+-				AAC_UNLOCK(sc, lock);
+-				return (TRY_AGAIN_LATER);
++			/* XXX evil hack so we don't die on lack of ccb's */
++			ccb = NULL;
++			while (ccb == NULL) {
++				ccb = aac_get_ccb(sc, xs->flags);
++				if (ccb == NULL) {
++					printf("aac_get_ccb returnednull\n");
++					tsleep(&sc->sc_free_ccb, PRIBIO,"aac_ccb", 0);
++				}
+ 			}
+ 
+ 			ccb->ac_blockno = blockno;
+@@ -944,15 +943,15 @@
+ 
+ 	/* Controller has a message for us? */
+ 	if (reason & AAC_DB_COMMAND_READY) {
+-		aac_host_command(sc);
+ 		AAC_CLEAR_ISTATUS(sc, AAC_DB_COMMAND_READY);
++		aac_host_command(sc);
+ 		claimed = 1;
+ 	}
+     
+ 	/* Controller has a response for us? */
+ 	if (reason & AAC_DB_RESPONSE_READY) {
+-		aac_host_response(sc);
+ 		AAC_CLEAR_ISTATUS(sc, AAC_DB_RESPONSE_READY);
++		aac_host_response(sc);
+ 		claimed = 1;
+ 	}
+ 
+@@ -1477,16 +1476,23 @@
+ 	while ((ccb = TAILQ_FIRST(&sc->sc_ccbq)) != NULL) {
+ 
+ 		xs = ccb->ac_xs;
+-		if (ccb->ac_flags & AAC_ACF_WATCHDOG)
++
++		if (ccb->ac_flags & AAC_ACF_WATCHDOG) {
+ 			timeout_del(&xs->stimeout);
++		/* watchdog timer implies ccb already built */
++		} else {
++			aac_build_ccb(ccb);
++		}
+ 
+-		if (aac_exec_ccb(ccb) == 0) {
++		if (aac_start(ccb) == EBUSY) {
+ 			ccb->ac_flags |= AAC_ACF_WATCHDOG;
+ 			timeout_set(&ccb->ac_xs->stimeout, aac_watchdog, ccb);
+ 			timeout_add(&xs->stimeout,
+ 			    (AAC_WATCH_TIMEOUT * hz) / 1000);
+ 			break;
+ 		}
++		xs->error = XS_NOERROR;
++		xs->resid = 0;
+ 		TAILQ_REMOVE(&sc->sc_ccbq, ccb, ac_chain);
+ 
+ 		if ((xs->flags & SCSI_POLL) == 0) {
+@@ -1497,8 +1503,8 @@
+ 	}
+ }
+ 
+-int
+-aac_exec_ccb(ccb)
++void
++aac_build_ccb(ccb)
+ 	struct aac_ccb *ccb;
+ {
+ 	struct scsi_xfer *xs = ccb->ac_xs;
+@@ -1510,7 +1516,7 @@
+ 	struct aac_blockwrite *bw;
+ 	bus_dmamap_t xfer;
+ 
+-	AAC_DPRINTF(AAC_D_CMD, ("aac_exec_ccb(%p, %p) ", xs, ccb));
++	AAC_DPRINTF(AAC_D_CMD, ("aac_build_ccb(%p, %p) ", xs, ccb));
+ 
+ 	/* build the FIB */
+ 	fib = ccb->ac_fib;
+@@ -1575,12 +1581,7 @@
+ 		    sizeof(struct aac_sg_entry);
+ 	}
+ 
+-	if (aac_start(ccb) == 0) {
+-		xs->error = XS_NOERROR;
+-		xs->resid = 0;
+-		return (1);
+-	}
+-	return (0);
++	return;
+ }
+ 
+ /********************************************************************************
+Index: dev/pci/aac_pci.c
+===================================================================
+RCS file: /cvs/src/sys/dev/pci/aac_pci.c,v
+retrieving revision 1.13
+diff -u -r1.13 aac_pci.c
+--- dev/pci/aac_pci.c	2004/08/29 19:07:26	1.13
++++ dev/pci/aac_pci.c	2005/02/09 11:27:04
+@@ -163,6 +163,9 @@
+ 	/* Adaptec ASR-2120S */
+ 	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_ASR2200S, PCI_VENDOR_ADP2,
+ 	    PCI_PRODUCT_ADP2_AACASR2120S, AAC_HWIF_I960RX },
++	/* Adaptec ASR-2200S */
++	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_ASR2200S, PCI_VENDOR_ADP2,
++	    PCI_PRODUCT_ADP2_ASR2200S, AAC_HWIF_I960RX },
+ 	{ 0, 0, 0, 0 }
+ };
+

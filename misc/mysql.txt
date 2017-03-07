@@ -1,0 +1,14 @@
+shell> groupadd mysql
+shell> useradd -g mysql mysql
+shell> gunzip < mysql-VERSION.tar.gz | tar -xvf -
+shell> cd mysql-VERSION
+shell> ./configure --prefix=/usr/local/mysql
+shell> make
+shell> make install
+shell> cp support-files/my-medium.cnf /etc/my.cnf
+shell> cd /usr/local/mysql
+shell> bin/mysql_install_db --user=mysql
+shell> chown -R root  .
+shell> chown -R mysql var
+shell> chgrp -R mysql .
+shell> bin/mysqld_safe --user=mysql &

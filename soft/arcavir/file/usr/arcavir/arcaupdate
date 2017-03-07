@@ -1,0 +1,421 @@
+#!/bin/sh
+# update, checks and/or gets new anti-virus databases for arcavir
+#
+# version: 1.5  2005.07.06 by Kamil Konieczny
+#
+#   added check for 'kill' return code, so we can detect problems
+#`        with old bases in arcavird
+#
+#   added ARCAVIR_FORCE_URL, arca_check_url - check for FORCE var
+#         ARCAVIRD_PID - for use with new arcavird option '-p'
+#
+# version: 1.2  2004.07.27 by Grzegorz Malicki, Dariusz Grzegorski
+
+# programs you must have: wget, md5sum (textutils), tr
+# optional programs: pgp, logger
+
+# --------------------------------------------------------------
+# modify below to your configuration and need
+# --------------------------------------------------------------
+
+# your path to programs
+
+PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin
+export PATH
+
+# md5 from GNU textutils
+MD5SUM=md5sum
+# in Debian Linux:
+# MD5SUM=md5sum.textutils
+
+# program for display current time in log
+#DATEBIN=/usr/bin/date
+#DATEBIN=/bin/date
+DATEBIN=date
+
+# path to file arcavir (or arcavir.static) (it is file, not directory !)
+ARCAVIR_PATH=/usr/arcavir/arcavir
+
+# directory with anti-virus databases
+# ARCAVIR_BASES=/usr/local/bin/arcavir/bases
+# ARCAVIR_BASES=/var/lib/arcavir/bases
+ARCAVIR_BASES=/usr/arcavir/abases
+
+# path to PGP with public key
+# comment out if you do not want verify data
+#
+# add arcalnx.asc key, PGP_PATH is arcavir path for pgp keyring :
+# $ cd $PGP_PATH
+# $ PGPPATH=`pwd` pgp -ka arcalnx.asc
+#
+# pgp you can get from 
+# http://www.pgpi.org/products/pgp/versions/freeware/unix/2.6.3i/
+# or use your search www page for pgp2.6.3i
+#
+# on this path there must exist at least two files
+# pubring.pgp, pubring.bak
+
+#### PGP_PATH="${ARCAVIR_BASES}"/.pgp
+PGP_PATH="${ARCAVIR_BASES}"/pgp
+
+# directory where to download data
+# WARN: it must exist
+ARCAVIR_DOWNLOAD="${ARCAVIR_BASES}"/tmp
+
+# send HUP signal to arcavird daemon
+# ARCAVIRD_KICK=N
+ARCAVIRD_KICK=Y
+#
+# non-zero means you must download bases again,
+# but this will allow to find bug in "kill -HUP arcavird.piD" error
+# error may come from wrong .pid filename or no arcavird runnning
+KILL_ERROR=5
+
+# path to file arcavird.pid
+# change this if you will use '-p' option in arcavird
+# default is "/var/run/arcavird.pid"
+ARCAVIRD_PID=/var/run/arcavird.pid
+
+
+# option for logging (facility)
+ARCAVIR_LOG_FACILITY=cron
+
+# logfile with time of downloads of bases
+# comment out if you do not need log
+ARCAVIR_UPDATE_LOG="${ARCAVIR_BASES}"/arcavir_update.log
+
+# temporary file
+ARCAVIR_TMP_FILE="${ARCAVIR_DOWNLOAD}"/arcavir_httpdata
+
+# URL to starting file, it contains one line address for download
+ARCAVIR_START_URL=http://update.arcabit.com/ArcaLinux2005/arcalinuxbases.lnk
+
+# if you expect that url ARCAVIR_START_URL is fixed,
+# set ARCAVIR_FORCE_URL var
+# there is no guarantee that it will work in future,
+# but you have one less wget call
+#
+# ARCAVIR_FORCE_URL=http://update.arcabit.com/ArcaLinux2005/
+#
+# you may try to use beta bases,
+#
+# ARCAVIR_FORCE_URL=http://update.arcabit.com/ArcaLinux2005/betabases/
+#
+# when beta bases will be updated regulary, use this var
+# with some more checks - this will need new version of this script
+#
+# ARCAVIR_BETA_BASES_URL=http://update.arcabit.com/ArcaLinux2005/betabases/
+
+
+# in case of problems, or if you need see what exatly happens
+# remove redirection to /dev/null
+# and remove '-q' option from wget calls
+
+#####################################
+
+VERBOSE=N
+USELOG=N
+
+#####################################
+
+cleanup ()
+{
+    rm -f "${ARCAVIR_TMP_FILE}" "${ARCAVIR_DOWNLOAD}"/wgetlist "${ARCAVIR_DOWNLOAD}"/copylist "${ARCAVIR_DOWNLOAD}"/abase?.dat >/dev/null 2>&1
+}
+
+lecho ()
+{
+    if [ "${USELOG}" = "Y" ]
+    then
+        logger -p "${ARCAVIR_LOG_FACILITY}".$1 -t arcaupdate -- "$2"
+    else
+        echo `$DATEBIN +%Y.%m.%d-%R` "$2"
+    fi
+}
+
+check_config ()
+{
+	if [ ! -d "${ARCAVIR_DOWNLOAD}" ]
+	then
+          lecho err "Configuration error : no DOWNLOAD directory."
+	fi
+	echo 0 >> "${ARCAVIR_TMP_FILE}"
+	if [ ! -s "${ARCAVIR_TMP_FILE}" ]
+	then
+          lecho err "Configuration error : cannot create ARCAVIR_TMP_FILE."
+	fi
+        
+	if [ "${ARCAVIRD_PID}" != "" ]
+	    then
+	    if [ ! -f  "${ARCAVIRD_PID}" ]
+		then
+		lecho err "Configuration error : check ARCAVIRD_PID file."
+	    fi
+	fi
+
+}
+
+arca_check_url ()
+{
+    rm -f "${ARCAVIR_TMP_FILE}"
+    ARCAVIR_URL=""
+
+    if ! wget -q -t 6 -O "${ARCAVIR_TMP_FILE}" "${ARCAVIR_START_URL}" >/dev/null 2>&1
+    then
+        lecho err "Cannot connect to main server, retry"
+        wget -t 6 -O "${ARCAVIR_TMP_FILE}" "${ARCAVIR_START_URL}" 
+	check_config
+        return 2
+    fi
+    
+    if [ "${VERBOSE}" = "Y" ]
+    then
+        echo Connected to main arcavir server.
+    fi
+    
+    ARCAVIR_URL=`tr -d '\012\015' <"${ARCAVIR_TMP_FILE}"`
+    rm -f "${ARCAVIR_TMP_FILE}"
+}
+
+arca_check ()
+{
+    if [ "${VERBOSE}" = "Y" ]
+    then
+        echo Checking for new arcavir bases.
+    fi
+    
+    if [ "${ARCAVIR_FORCE_URL}" = "" ]
+    then
+	arca_check_url
+    else
+	ARCAVIR_URL=${ARCAVIR_FORCE_URL}
+    fi
+    
+    if [ "${ARCAVIR_URL}" = "" ]
+    then
+	return 2
+    fi
+
+    
+    if ! wget -q -t 6 -O "${ARCAVIR_TMP_FILE}" "${ARCAVIR_URL}"arcalinuxbases.md5 >/dev/null 2>&1
+    then
+        lecho err "Cannot connect to data server."
+	check_config
+        return 3
+    fi
+    
+    if [ "${VERBOSE}" = "Y" ]
+    then
+        echo Connected to arcavir data server.
+    fi
+    
+    if [ "${ARCAVIR_PGPKEY_PATH}" != "" ]
+    then
+
+	cat "${ARCAVIR_TMP_FILE}" | tr -d '\015' > "${ARCAVIR_TMP_FILE}".bak 2>&1
+
+        if PGPPATH="${ARCAVIR_PGPKEY_PATH}" pgp +force +batchmode "${ARCAVIR_TMP_FILE}" >/dev/null 2>&1
+        then
+            lecho err "Failed verification of PGP signature!"
+            return 4
+        elif [ "${VERBOSE}" = "Y" ]
+        then
+            echo Verified PGP signature.
+        fi
+    fi
+    
+    rm -f "${ARCAVIR_DOWNLOAD}"/wgetlist >/dev/null 2>&1
+    
+    grep abase.\\.dat "${ARCAVIR_TMP_FILE}" | tr -d '*\015' | \
+    while read SUM NAME
+    do
+        if [ "$1" = "force" ]
+        then
+            echo "${ARCAVIR_URL}${NAME}" >>"${ARCAVIR_DOWNLOAD}"/wgetlist
+        elif ! echo "${SUM} *${ARCAVIR_BASES}/${NAME}" | "${MD5SUM}" --status --check - >/dev/null 2>&1
+        then
+            echo "${ARCAVIR_URL}${NAME}" >>"${ARCAVIR_DOWNLOAD}"/wgetlist
+        else
+            echo "${ARCAVIR_BASES}/${NAME}" >>"${ARCAVIR_DOWNLOAD}"/copylist
+        fi
+    done
+
+    if [ "$1" != "force" ]
+    then
+        if [ -s "${ARCAVIR_DOWNLOAD}"/wgetlist ]
+        then
+            lecho info "There are new anti virus databases."
+            return 1
+        else
+            lecho info "You have current anti virus databases."
+            return 0
+        fi
+    else
+        lecho info "Forced download of anti virus databases."
+        return 1
+    fi
+}
+
+
+arca_do_get ()
+{
+    if [ "${VERBOSE}" = "Y" ]
+    then
+        echo Get arcavir bases
+    fi
+    
+    if [ -s "${ARCAVIR_DOWNLOAD}"/copylist ]
+    then
+        while read COPYPATH
+        do
+            cp -f -p "${COPYPATH}" "${ARCAVIR_DOWNLOAD}"/ >/dev/null 2>&1
+        done <"${ARCAVIR_DOWNLOAD}"/copylist
+    fi
+    
+    ( cd "${ARCAVIR_DOWNLOAD}" ; wget -q -t 6 -i wgetlist >/dev/null 2>&1 )
+    CHECKVAL=$?
+    
+    if [ ${CHECKVAL} -ne 0 ]
+    then
+        lecho err "Cannot connect to data server or broken transmission."
+        return 5
+    fi
+    
+    install_bases
+}
+
+arca_get ()
+{
+    arca_check $1
+    CHECKVAL=$?
+    if [ ${CHECKVAL} -eq 1 ]
+    then
+        arca_do_get
+        CHECKVAL=$?
+    fi
+    return ${CHECKVAL}
+}
+
+install_bases ()
+{
+    if [ ! -f "${ARCAVIR_DOWNLOAD}"/abase0.dat ]
+    then
+        lecho err "There are no bases on disk , missing abase0.dat file."
+        return 6
+    fi
+    
+    if [ "${VERBOSE}" = "Y" ]
+    then
+        echo Checking work of arcavir
+    fi
+    
+    if ! "${ARCAVIR_PATH}" -f /dev/null --arcavir-dat-path="${ARCAVIR_DOWNLOAD}"/ -s "${ARCAVIR_DOWNLOAD}"/abase0.dat >/dev/null 2>&1
+    then
+        lecho err "Error in bases, check for new version of arcavir."
+        return 7
+    fi
+
+    
+    if [ "${VERBOSE}" = "Y" ]
+    then
+        echo Installation of arcavir bases
+    fi
+    
+    if ! mv -f "${ARCAVIR_DOWNLOAD}"/abase?.dat "${ARCAVIR_BASES}"/ >/dev/null 2>&1
+    then
+        lecho err "Error during installation of arcavir bases."
+        return 8
+    fi
+
+    mv -f "${ARCAVIR_TMP_FILE}".bak "${ARCAVIR_BASES}"/arcalinuxbases.md5 >/dev/null 2>&1
+    
+    if [ "${ARCAVIRD_KICK}" = "Y" -a -r "${ARCAVIRD_PID}" ]
+    then
+        if [ "${VERBOSE}" = "Y" ]
+        then
+            echo Send HUP to arcavird process
+        fi
+
+        kill -HUP `cat "${ARCAVIRD_PID}"`
+	KILL_VAL=$?
+    
+	if [ ${KILL_VAL} -ne 0 ]
+	    then
+	    lecho err "Cannot send HUP to arcavird, check pid path or arcavird not installed."
+	    return ${KILL_ERROR}
+	fi
+
+    fi
+    
+    if [ "${ARCAVIR_UPDATE_LOG}" != "" ]
+    then
+        date >>"${ARCAVIR_UPDATE_LOG}"
+        if [ -s "${ARCAVIR_DOWNLOAD}"/wgetlist ]
+        then
+            cat "${ARCAVIR_DOWNLOAD}"/wgetlist >>"${ARCAVIR_UPDATE_LOG}"
+        fi
+        echo >>"${ARCAVIR_UPDATE_LOG}"
+    fi
+    
+    lecho info "Successfuly installed new arcavir bases."
+    return 0
+}
+
+print_help ()
+{
+    lecho info "arcaupdate version 1.3 2005.05.19  (c) ArcaBit Poland, Sp. z o.o. 2005"
+    lecho info ""
+    lecho info "usage: arcaupdate option [verbose|uselog]"
+    lecho info ""
+    lecho info "options:"
+    lecho info "   check    :check for new bases."
+    lecho info "   get      :get new bases and install"
+    lecho info "   getforce :force download of bases and intall"
+    lecho info "   install  :only installation (if bases downloaded manualyy)"
+    lecho info "   help     :this description"
+    lecho info ""
+    lecho info "last option may be verbose to see whats going on"
+    lecho info "uselog redirects stdout to system log via syslog"
+}
+
+
+if [ "$2" = "verbose" ]
+then
+    VERBOSE=Y
+fi
+
+
+if [ "$2" = "uselog" ]
+then
+    USELOG=Y
+fi
+
+case "$1" in
+help)
+    print_help
+    ;;
+check)
+    cleanup
+    arca_check noforce
+    cleanup
+    ;;
+get)
+    cleanup
+    arca_get noforce
+    # comment line below if you want check yourself temporary files
+    cleanup
+    ;;
+getforce)
+    cleanup
+    arca_get force
+    cleanup
+    ;;
+install)
+    install_bases
+    ;;
+*)
+    print_help
+    ;;
+esac
+
+exit 0

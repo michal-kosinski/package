@@ -1,0 +1,19 @@
+$OpenBSD: patch-src_osdep_unix_env_unix_c,v 1.2 2004/07/18 22:30:19 jakob Exp $
+--- src/osdep/unix/env_unix.c.orig	Wed Jul  7 17:19:57 2004
++++ src/osdep/unix/env_unix.c	Wed Jul  7 17:20:32 2004
+@@ -797,15 +797,12 @@ char *myhomedir ()
+ static char *mymailboxdir ()
+ {
+   char *home = myhomedir ();
+-				/* initialize if first time */
+-  if (!myMailboxDir && myHomeDir) {
+     if (mailsubdir) {
+       char tmp[MAILTMPLEN];
+       sprintf (tmp,"%s/%s",home,mailsubdir);
+       myMailboxDir = cpystr (tmp);/* use pre-defined subdirectory of home */
+     }
+     else myMailboxDir = cpystr (home);
+-  }
+   return myMailboxDir ? myMailboxDir : "";
+ }
+ 

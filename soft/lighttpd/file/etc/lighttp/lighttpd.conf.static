@@ -1,0 +1,23 @@
+server.document-root = "/home/www/www.example.com/http/pages/"
+
+server.port = 8080
+
+server.username = "httpd"
+server.groupname = "httpd"
+
+mimetype.assign = (
+  ".html" => "text/html", 
+  ".txt" => "text/plain",
+  ".jpg" => "image/jpeg",
+  ".png" => "image/png"
+)
+
+static-file.exclude-extensions = ( ".fcgi", ".php", ".rb", "~", ".inc" )
+index-file.names = ( "index.html" )
+
+$HTTP["host"] == "www2.example.com" {
+  server.document-root = "/home/www/www2.example.com/http/pages/"
+  $HTTP["url"] =~ "^/download/" {
+    dir-listing.activate = "enable"
+  }
+}

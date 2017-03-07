@@ -1,0 +1,5 @@
+AuthType Basic
+AuthName "Tajny katalog na haslo"
+AuthUserFile /home/www/www.example.com/password.file
+Satisfy All
+Require valid-user

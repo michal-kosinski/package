@@ -1,0 +1,80 @@
+diff -dur wput-0.6/src/ftp.c wput-0.6.1/src/ftp.c
+--- wput-0.6/src/ftp.c	Mon Oct 22 22:24:16 2007
++++ wput-0.6.1/src/ftp.c	Mon Oct 22 22:25:01 2007
+@@ -18,6 +18,7 @@
+ 
+ /* This file contains procedures for interacting with the FTP-Server */
+ 
++#include <errno.h>
+ #include "ftp.h"
+ #include "utils.h"
+ #include "progress.h"
+diff -dur wput-0.6/src/queue.c wput-0.6.1/src/queue.c
+--- wput-0.6/src/queue.c	Mon Oct 22 22:24:16 2007
++++ wput-0.6.1/src/queue.c	Mon Oct 22 22:25:32 2007
+@@ -29,6 +29,7 @@
+  *  o One URL may take multiple files (e.g. directory)
+  *  o We sometimes don't need a filename if we got the URL
+  * */
++#include <errno.h>
+ #include "wput.h"
+ #include "_queue.h"
+ #include "utils.h"
+diff -dur wput-0.6/src/socketlib.c wput-0.6.1/src/socketlib.c
+--- wput-0.6/src/socketlib.c	Mon Oct 22 22:24:16 2007
++++ wput-0.6.1/src/socketlib.c	Mon Oct 22 22:27:56 2007
+@@ -366,7 +366,7 @@
+ 	printout(vDEBUG, "Checking whether %d is writable... ", s);
+ 	res = select(s+1, NULL, &inSet, NULL, &t);
+ 	printout(vDEBUG, "%d (%d:%s)\n", res, errno, strerror(errno));
+-	if(errno > 0 && errno != 115)
++	if(errno > 0 && errno != 115 && errno != 36)
+ 		return 0;
+ 	return res;
+ }
+@@ -391,7 +391,7 @@
+ #endif
+   socket_set_blocking(sock->fd, 0);
+   c = connect(sock->fd,remote_addr,size);
+-  if(errno > 0 && errno != 115) {
++  if(errno > 0 && errno != 115 && errno != 36) {
+ 	printout(vMORE, "[%s]", strerror(errno));
+ 	return NULL;
+   }
+diff -dur wput-0.6/src/socketlib.h wput-0.6.1/src/socketlib.h
+--- wput-0.6/src/socketlib.h	Mon Oct 22 22:24:16 2007
++++ wput-0.6.1/src/socketlib.h	Mon Oct 22 22:28:30 2007
+@@ -11,6 +11,7 @@
+ 
+ #ifndef WIN32
+ 
++#include <sys/types.h>
+ #include <sys/socket.h>
+ 
+ #define closesocket(x) close(x)
+diff -dur wput-0.6/src/utils.c wput-0.6.1/src/utils.c
+--- wput-0.6/src/utils.c	Mon Oct 22 22:24:16 2007
++++ wput-0.6.1/src/utils.c	Mon Oct 22 22:29:46 2007
+@@ -33,8 +33,9 @@
+   int i, k;
+   char * suffix;
+   int dotpos = strlen(filename);
+-  while(filename[--dotpos] != '.');
+-
++  if(strchr(filename, '.')) {
++   while(filename[--dotpos] != '.');
++  }
+   suffix = (char *)(filename + (++dotpos));
+   k = strlen(suffix);
+   for(i = 0; k > 0 && i < 14; i ++)
+diff -dur wput-0.6/src/wput.c wput-0.6.1/src/wput.c
+--- wput-0.6/src/wput.c	Mon Oct 22 22:24:16 2007
++++ wput-0.6.1/src/wput.c	Mon Oct 22 22:30:17 2007
+@@ -21,6 +21,7 @@
+    
+ #include <sys/types.h>
+ #include <sys/stat.h>
++#include <errno.h>
+ #ifndef WIN32
+ #  include <netinet/in.h>
+ #endif

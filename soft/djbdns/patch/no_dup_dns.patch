@@ -1,0 +1,29 @@
+diff -dur djbdns-1.05/tinydns-data.c djbdns-1.05-1/tinydns-data.c
+--- tinydns-data.c	Sun Feb 11 22:11:45 2001
++++ tinydns-data.new.c	Wed Jan 24 11:10:41 2007
+@@ -308,12 +308,6 @@
+ 	rr_addname(d2);
+ 	rr_finish(d1);
+ 
+-	if (ip4_scan(f[1].s,ip)) {
+-	  rr_start(DNS_T_A,ttl,ttd,loc);
+-	  rr_add(ip,4);
+-	  rr_finish(d2);
+-	}
+-
+ 	break;
+ 
+       case '+': case '=':
+@@ -362,12 +356,6 @@
+ 	rr_add(buf,2);
+ 	rr_addname(d2);
+ 	rr_finish(d1);
+-
+-	if (ip4_scan(f[1].s,ip)) {
+-	  rr_start(DNS_T_A,ttl,ttd,loc);
+-	  rr_add(ip,4);
+-	  rr_finish(d2);
+-	}
+ 	break;
+ 
+       case '^': case 'C':

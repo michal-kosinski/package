@@ -1,0 +1,162 @@
+
+# Install the package
+install: install_pkg
+
+# Get teh source code
+fetch_src:
+	@cd ../../archive ; \
+	if [ ! -f $(LOCAL) ]; then \
+	  $(FTP) $(REMOTE) ;\
+	fi
+	
+
+# Decompress source code
+decomp_src:
+	@cd build ;\
+	tar zxf ../../../archive/$(LOCAL)
+	
+# Decompress source code with bzip2
+decomp_src_bzip2:
+	@cd build ;\
+	gtar jxf ../../../archive/$(LOCAL)
+
+# Decompress source code with unzip
+decomp_src_unzip:
+	@cd build ;\
+	unzip ../../../archive/$(LOCAL)
+
+# Patch source code
+patch_src:
+	@cd $(BUILDDIR) ;\
+	for a in `find ../../patch -type f`; do \
+	  patch -p1 < $$a ;\
+	done
+	
+
+# Configure source
+config_src:
+	@cd $(BUILDDIR) ;\
+	./configure $(DEFAULT_FLAGS) $(CONFIGURE_FLAGS)
+	
+
+# Make source
+make_src:
+	@cd $(BUILDDIR) ;\
+	$(MAKE) all
+	
+
+# Install source
+install_src:
+	@cd $(BUILDDIR) ;\
+	$(MAKE) DESTDIR=$(DESTDIR) install-strip
+
+# Install source without stripping
+install_src_nostrip:
+	@cd $(BUILDDIR) ;\
+	$(MAKE) DESTDIR=$(DESTDIR) install	
+
+# Claen everything
+clean:
+	@rm -rf build/*
+	@rm -rf install/*
+	
+
+clean_after:
+	@rm -rf build/*
+	@rm -rf install/*
+	
+
+# Make_pkg
+make_pkg:
+	@cd file ;\
+	for a in `ls`; do cp -Rfp $$a ../install/ ; done ;\
+	cd .. ;\
+	tmp=`mktemp /tmp/_pkg.XXXXXXXXXX` ;\
+	if find ./install -type f|grep -v CVS >$$tmp;then true; fi ;\
+	if find ./install -type l|grep -v CVS >>$$tmp;then true; fi ;\
+	if find ./install -type p|grep -v CVS >>$$tmp;then true; fi ;\
+	if find ./install -type s|grep -v CVS >>$$tmp;then true; fi ;\
+	rm -f ../../install/$(PKG_NAME).$(PKG_VERSION).tgz ;\
+	tar czf ../../install/$(PKG_NAME).$(PKG_VERSION).tgz -I $$tmp;\
+	rm -f $$tmp
+	
+
+# Install package and update config file
+install_pkg:
+	@DIR=`pwd` ;\
+	if ! grep "pkg: $(PKG_NAME) ver: $(PKG_VERSION)" ../../config/packages_avail; then \
+	  make ;\
+	fi ;\
+	if ! grep "pkg: $(PKG_NAME) ver: $(PKG_VERSION)" ../../config/packages_installed; then \
+	  rm -rf /tmp/install ;\
+	  mkdir /tmp/install ;\
+	  cd /tmp/install ;\
+	  tar zxfp $$DIR/../../install/`ls $$DIR/../../install|grep $(PKG_NAME).$(PKG_VERSION)|sort -r|head -n 1` ;\
+	  cd install ;\
+	  if [ -f preinstall.sh ]; then sh preinstall.sh ; fi ;\
+	  for a in `find * -type d -maxdepth 0`; do cp -pRf $$a / ; done ;\
+	  if [ -f install.sh ]; then sh install.sh ; fi ;\
+	  rm -rf /tmp/install ;\
+	  cd $$DIR/../../config ;\
+	  tmp=`mktemp /tmp/_pkg.XXXXXXXXXX` ;\
+	  cat packages_installed | grep -v $(PKG_NAME).$(PKG_VERSION) > $$tmp ;\
+	  mv $$tmp packages_installed ;\
+	  echo "pkg: $(PKG_NAME) ver: $(PKG_VERSION)" >> packages_installed ;\
+	fi
+	
+
+# reinstall
+reinstall: rem_cfg install_pkg
+
+rem_cfg:
+	@cd ../../config ;\
+	tmp=`mktemp /tmp/_pkg.XXXXXXXXXX` ;\
+	cat packages_installed | grep -v "pkg: $(PKG_NAME) ver: $(PKG_VERSION)" > $$tmp ;\
+	mv $$tmp packages_installed
+	
+
+# Update config file
+update_config:
+	@cd ../../config ;\
+	tmp=`mktemp /tmp/_pkg.XXXXXXXXXX` ;\
+	cat packages_avail | grep -v "pkg: $(PKG_NAME) ver: $(PKG_VERSION)" > $$tmp ;\
+	mv $$tmp packages_avail ;\
+	echo "pkg: $(PKG_NAME) ver: $(PKG_VERSION)" >> packages_avail
+	
+
+# Make dependencies
+make_dep:
+	@if [ ! -e ../../config/packages_avail ]; then echo "# stores available packages and their versions">../../config/packages_avail; fi	
+	@if [ ! -e ../../config/packages_installed ]; then echo "# stores installed packages and their versions">../../config/packages_installed; fi
+	@if [ ! -e build ]; then mkdir build; fi
+	@if [ ! -e file ]; then mkdir file; fi
+	@if [ ! -e install ]; then mkdir install; fi
+	@if [ ! -e patch ]; then mkdir patch; fi
+	@for a in $(DEPENDS); do \
+	  CDIR=`pwd` ;\
+	  cd ../$$a ;\
+	  make install_pkg ;\
+	  cd $$CDIR ;\
+	done
+	
+	 
+
+# Uninstall package
+uninstall:
+	@tmp_files=`mktemp /tmp/_pkg.XXXXXXXXXX` ;\
+	tmp_dirs=`mktemp /tmp/_pkg.XXXXXXXXXX` ;\
+	tar ztf ../../install/$(PKG_NAME).$(PKG_VERSION).tgz|sed s/".\/install"/""/g|grep -v install.sh > $$tmp_files ;\
+	for a in `cat $$tmp_files|cut -d"/" -f1-4|sort -u |grep $(PKG_NAME)` ; do if file -b $$a|grep directory >> /dev/null 2>&1; then echo $$a|grep -v directory >> $$tmp_dirs ; fi ; done ;\
+	for a in `cat $$tmp_dirs`  ; do cat $$tmp_files|grep -v $$a > $$tmp_files ; done ;\
+	for a in `cat $$tmp_files|grep -v etc` ; do echo "rm -f $$a"  ; done ;\
+	for a in `cat $$tmp_dirs|grep -v etc`  ; do echo "rm -rf $$a" ; done ;\
+
+# Make Love :-)
+love:
+	@echo "not war?"
+
+# Development stage
+dev:
+	@echo "\nTHIS PACKAGE IS IN EARLY DEVELOPMENT STAGE! DON'T USE IT IF YOU'RE NOT DEVELOPING IT RIGHT NOW!\n(press \"c\" to continue or any other key to abort)" ;\
+	read dev ;\
+	if [ ! "$$dev" = "c" ]; then false ; fi 

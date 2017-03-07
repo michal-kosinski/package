@@ -1,0 +1,21 @@
+diff -dur portsentry_beta/portsentry_config.h portsentry_beta.new/portsentry_config.h
+--- portsentry_beta/portsentry_config.h	Fri May 23 20:10:13 2003
++++ portsentry_beta.new/portsentry_config.h	Thu May  4 15:23:07 2006
+@@ -22,10 +22,10 @@
+ 
+ /* These are probably ok. Be sure you change the Makefile if you */
+ /* change the path */
+-#define CONFIG_FILE "/usr/local/psionic/portsentry/portsentry.conf"
++#define CONFIG_FILE "/etc/portsentry/portsentry.conf"
+ 
+ /* The location of Wietse Venema's TCP Wrapper hosts.deny file */
+-#define WRAPPER_HOSTS_DENY "/etc/hosts.deny"
++#define WRAPPER_HOSTS_DENY "/etc/portsentry/hosts.deny"
+ 
+ /* The default syslog is as daemon.notice. You can also use */
+ /* any of the facilities from syslog.h to send messages to (LOCAL0, etc) */
+@@ -35,4 +35,3 @@
+ 
+ /* the maximum number of hosts to keep in a "previous connect" state engine*/
+ #define MAXSTATE 50 
+-

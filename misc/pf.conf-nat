@@ -1,0 +1,49 @@
+ext_if = "rl0"
+int_if = "rl1"
+vpn_if = "tun0"
+flog=''
+
+table <trusted> { 83.19.130.6, 83.18.194.174 } const
+
+scrub in no-df
+
+# http://www.benzedrine.cx/ackpri.html
+
+altq on $ext_if priq bandwidth 1Mb queue { q_pri, q_def }
+	queue q_pri priority 7
+	queue q_def priority 1 priq(default)
+
+nat on $ext_if from !($ext_if) -> ($ext_if:0)
+rdr pass on $int_if proto tcp to port ftp -> 127.0.0.1 port 8021
+
+block in quick $flog on $ext_if from any os NMAP
+
+block in quick $flog on $ext_if proto tcp from any to any flags /S
+block in quick $flog on $ext_if proto tcp from any to any flags /SFRA
+block in quick $flog on $ext_if proto tcp from any to any flags /SFRAU
+block in quick $flog on $ext_if proto tcp from any to any flags A/A
+block in quick $flog on $ext_if proto tcp from any to any flags F/SFRA
+block in quick $flog on $ext_if proto tcp from any to any flags U/SFRAU
+block in quick $flog on $ext_if proto tcp from any to any flags SF/SF
+block in quick $flog on $ext_if proto tcp from any to any flags SF/SFRA
+block in quick $flog on $ext_if proto tcp from any to any flags SR/SR
+block in quick $flog on $ext_if proto tcp from any to any flags FUP/FUP
+block in quick $flog on $ext_if proto tcp from any to any flags FUP/SFRAUPEW
+block in quick $flog on $ext_if proto tcp from any to any flags SFRAU/SFRAU
+block in quick $flog on $ext_if proto tcp from any to any flags SFRAUP/SFRAUP
+
+block in $flog
+pass out $flog keep state
+
+pass quick $flog on { lo $int_if }
+antispoof quick for { lo $int_if }
+
+#pass in $flog quick on $ext_if from <trusted> keep state
+
+pass in $flog on $ext_if proto tcp to ($ext_if) port ssh keep state
+pass in $flog on $ext_if inet proto icmp all icmp-type echoreq keep state
+
+pass out on $ext_if proto tcp from $ext_if to any flags S/SA keep state queue (q_def, q_pri)
+pass in  on $ext_if proto tcp from any to $ext_if flags S/SA keep state queue (q_def, q_pri)
+
+pass in $flog on $ext_if proto tcp to ($ext_if) port > 49151 user proxy keep state

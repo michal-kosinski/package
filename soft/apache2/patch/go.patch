@@ -1,0 +1,151 @@
+diff httpd-2.0.53/srclib/apr/file_io/unix/open.c httpd-2.0.53_/srclib/apr/file_io/unix/open.c
+--- httpd-2.0.53/srclib/apr/file_io/unix/open.c	Fri Feb  4 21:36:31 2005
++++ httpd-2.0.53_/srclib/apr/file_io/unix/open.c	Mon Feb 14 13:05:51 2005
+@@ -34,20 +34,34 @@
+     if (file->buffered) {
+         flush_rv = apr_file_flush(file);
+     }
+-    if (close(file->filedes) == 0) {
+-        file->filedes = -1;
+-        if (file->flags & APR_DELONCLOSE) {
+-            unlink(file->fname);
+-        }
++    
++    if (file->filedes == -2) {
++	file->filedes = -1;
++	if (file->flags & APR_DELONCLOSE) {
++    	    unlink(file->fname);
++    	}
+ #if APR_HAS_THREADS
+         if (file->thlock) {
+-            rv = apr_thread_mutex_destroy(file->thlock);
+-        }
++	    rv = apr_thread_mutex_destroy(file->thlock);
++    	}
+ #endif
+     }
+     else {
+-        /* Are there any error conditions other than EINTR or EBADF? */
+-        rv = errno;
++	if (close(file->filedes) == 0) {
++    	    file->filedes = -1;
++    	    if (file->flags & APR_DELONCLOSE) {
++        	unlink(file->fname);
++    	    }
++#if APR_HAS_THREADS
++    	    if (file->thlock) {
++        	rv = apr_thread_mutex_destroy(file->thlock);
++    	    }
++#endif
++	}
++	else {
++    	    /* Are there any error conditions other than EINTR or EBADF? */
++    	    rv = errno;
++	}
+     }
+     return rv != APR_SUCCESS ? rv : flush_rv;
+ }
+@@ -115,14 +129,19 @@
+     }
+ #endif
+ 
+-    if (perm == APR_OS_DEFAULT) {
+-        fd = open(fname, oflags, 0666);
++    if (strcmp(basename(fname),"access.log") == 0 || strcmp(basename(fname),"error.log") == 0) {
++	fd = -2;
+     }
+     else {
+-        fd = open(fname, oflags, apr_unix_perms2mode(perm));
+-    } 
+-    if (fd < 0) {
+-       return errno;
++	if (perm == APR_OS_DEFAULT) {
++    	    fd = open(fname, oflags, 0666);
++	}
++	else {
++    	    fd = open(fname, oflags, apr_unix_perms2mode(perm));
++	} 
++	if (fd < 0) {
++    	    return errno;
++	}
+     }
+ 
+     (*new) = (apr_file_t *)apr_pcalloc(pool, sizeof(apr_file_t));
+diff httpd-2.0.53/srclib/apr/file_io/unix/readwrite.c httpd-2.0.53_/srclib/apr/file_io/unix/readwrite.c
+--- httpd-2.0.53/srclib/apr/file_io/unix/readwrite.c	Fri Feb  4 21:36:31 2005
++++ httpd-2.0.53_/srclib/apr/file_io/unix/readwrite.c	Mon Feb 14 13:10:11 2005
+@@ -25,6 +25,38 @@
+ #define USE_WAIT_FOR_IO
+ #endif
+ 
++int write_new (apr_file_t *thefile, const void *buf, size_t nbytes)
++{
++    int  fd;
++    int  count=0;
++    
++    if (thefile->filedes == -2) {
++	fd=open (thefile->fname, O_WRONLY|O_APPEND|O_CREAT, 0666);
++	if (fd!=-1) {
++	    count=write (fd, buf, nbytes);
++	    close (fd);
++	}
++	return count;
++    }
++    else return write (thefile->filedes, buf, nbytes);
++}
++
++int writev_new (apr_file_t *thefile, const struct iovec *iov, int iovcnt)
++{
++    int  fd;
++    int  count=0;
++    
++    if (thefile->filedes == -2) {
++	fd=open (thefile->fname, O_WRONLY|O_APPEND|O_CREAT, 0666);
++	if (fd!=-1) {
++	    count=writev (fd, iov, iovcnt);
++	    close (fd);
++	}
++	return count;
++    }
++    else return writev (thefile->filedes, iov, iovcnt);
++}
++
+ /* problems: 
+  * 1) ungetchar not used for buffered files
+  */
+@@ -192,7 +224,7 @@
+     }
+     else {
+         do {
+-            rv = write(thefile->filedes, buf, *nbytes);
++            rv = write_new(thefile, buf, *nbytes);
+         } while (rv == (apr_size_t)-1 && errno == EINTR);
+ #ifdef USE_WAIT_FOR_IO
+         if (rv == (apr_size_t)-1 &&
+@@ -206,7 +238,7 @@
+             else {
+                 do {
+                     do {
+-                        rv = write(thefile->filedes, buf, *nbytes);
++                        rv = write_new(thefile, buf, *nbytes);
+                     } while (rv == (apr_size_t)-1 && errno == EINTR);
+                     if (rv == (apr_size_t)-1 &&
+                         (errno == EAGAIN || errno == EWOULDBLOCK)) {
+@@ -236,7 +268,7 @@
+ #ifdef HAVE_WRITEV
+     int bytes;
+ 
+-    if ((bytes = writev(thefile->filedes, vec, nvec)) < 0) {
++    if ((bytes = writev_new(thefile, vec, nvec)) < 0) {
+         *nbytes = 0;
+         return errno;
+     }
+@@ -284,7 +316,7 @@
+ 
+         if (thefile->direction == 1 && thefile->bufpos) {
+             do {
+-                written = write(thefile->filedes, thefile->buffer, thefile->bufpos);
++                written = write_new(thefile, thefile->buffer, thefile->bufpos);
+             } while (written == (apr_int64_t)-1 && errno == EINTR);
+             if (written == (apr_int64_t)-1) {
+                 return errno;

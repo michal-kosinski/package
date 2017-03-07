@@ -1,0 +1,230 @@
+   Zero to IPSec in 4 minutes
+   [41]Dragos Ruiu 2006-02-28
+
+   This short article looks at how to get a fully functional IPSec VPN up
+   and running between two fresh OpenBSD installations in about four
+   minutes flat.
+   Until recently, setting up an open-source IPSec solution has been
+   woefully complex and involved wading through an alphabet soup of
+   committee-designed protocols. Many people give up on IPSec after their
+   first peek at the horrible and complex software documentation, opting
+   instead to install some sort of commercial SSL VPN which seems much
+   simpler. For those who have been through this exercise, a jumble of
+   SAs, ESPs, AHs, SPIs, CAs, certs, FIFOs, IKEs and policy jargon inside
+   RFCs is enough to give anyone a headache. However, there is good new
+   on the IPSec front: it has all finally been covered up with a nice,
+   simple way to set it up under [42]OpenBSD.
+
+   In this short article we'll look at how to get a fully functional
+   IPSec VPN up and running between two fresh OpenBSD machines in about
+   four minutes flat. The goal here certainly isn't to give an exhaustive
+   overview of all the option available in IPSec or OpenBSD, but rather
+   just how quickly and easily we can be up and running when others take
+   days or weeks to do the same thing.
+
+Introducing ipsecctl in OpenBSD
+
+   You might not have noticed it, but a new command has sneaked into
+   OpenBSD, starting with version 3.8: [43]ipsecctl. And it's truly
+   wonderful. It provides a much needed layer of abstraction to all the
+   highly flexible, but horribly intricate details of IPSec. In reality,
+   most people don't need half the configuration and protocol options
+   that IPSec provides, so this abstraction layer is sorely needed.
+
+   If all one wants to do is set up a simple encrypted Virtual Private
+   Network (VPN) between two sites, the configuration steps one would
+   have to go through otherwise were always truly ugly, and a bottle of
+   aspirin was a mandatory accessory. No more! Now with ipsecctl, a
+   simple VPN can be setup by editing one simple configuration file on
+   OpenBSD: /etc/ipsec.conf.
+
+   As a test, my colleague Sean Comeau and I took two freshly installed
+   OpenBSD firewalls, in their default configurations, and edited three
+   files. We changed a total of seven lines of configuration on each
+   system - and had an IPSec VPN exchanging packets between our two sites
+   within four minutes of the first boot.
+
+   Those who haven't installed OpenBSD before will find [44]the
+   installation process surprisingly easy. The two most popular ways of
+   installing are via CD-ROM (an inexpensive option, but it must be
+   purchased from the OpenBSD team), or via a simple FTP install using a
+   floppy or CD-ROM boot media. With a broadband connection, a complete
+   FTP install of a default system can easily be completed in under ten
+   minutes. For the purpose of this article, we'll assume you have two
+   fresh installs of OpenBSD ready to go. Note that if you follow the
+   [45]CVS builds of either OpenBSD 3.8-stable or OpenBSD 3.8-current,
+   both machines in your VPN should be running the same snapshot.
+
+An IPSec example
+
+   To illustrate just how simple IPSec is to setup in OpenBSD, let's
+   start with an example. First, let's quickly review our goals. We want
+   to network two remote subnets via a fully encrypted, standard IPSec
+   Virtual Private Network (VPN). Both our subnets will have OpenBSD
+   Network Address Translation (NAT) firewalls.
+
+   Network A:
+
+   External IP address: 1.2.3.4 Internal IP address block: 10.1.1.0/24
+
+   Network B:
+
+   External IP address: 5.6.7.8 Internal IP address block: 10.2.2.0/24
+
+   The [46]configuration of pf, which is our firewall and provides NAT,
+   is found /etc/pf.conf. On both systems in this example, [47]pf.conf
+   should look as follows:
+
+ext_if="fxp0"
+int_if="fxp1"
+set skip on { lo $int_if }
+nat on $ext_if from !($ext_if) -> ($ext_if:0)
+block in
+pass out keep state
+
+   Both systems have had IP forwarding turned on by uncommenting the
+   "net.inet.ip.forwarding=1" line in the /etc/sysctl.conf file. IP
+   forwarding is turned off by default, but is required for NAT. Now that
+   we understand our objectives and have two fully functional base
+   systems, what do we have to do to link our two internal subnets
+   together with a VPN? As you will see, the configuration is
+   surprisingly simple.
+
+Step 1. Configure IPSec
+
+   First, add the following lines to Firewall A in /etc/ipsec.conf:
+
+ike esp from 10.1.1.0/24 to 10.2.2.0/24 peer 5.6.7.8
+ike esp from 1.2.3.4 to 10.2.2.0/24 peer 5.6.7.8
+ike esp from 1.2.3.4 to 5.6.7.8
+
+   Next, add the following lines to Firewall B's /etc/ipsec.conf:
+
+ike passive esp from 10.2.2.0/24 to 10.1.1.0/24 peer 1.2.3.4
+ike passive esp from 5.6.7.8 to 10.1.1.0/24 peer 1.2.3.4
+ike passive esp from 5.6.7.8 to 1.2.3.4
+
+   The passive modifier in the configuration denotes that Firewall A will
+   initiate the connection and Firewall B will listen for it.
+
+Step 2. Allow IPSec through the firewall
+
+   Now, add the following line to /etc/pf.conf to configure the firewall
+   on Firewall A:
+
+pass quick on $ext_if from 5.6.7.8
+
+   and change the "set skip" line from:
+
+set skip on { lo $int_if }
+
+   to:
+
+set skip on { lo $int_if enc0 }
+
+   This adds the encapsulated enc0 interface to the list.
+
+   Now let's move on to Firewall B. In this /etc/pf.conf, add the
+   following lines:
+
+pass quick on $ext_if  from 1.2.3.4
+set skip on { lo $int_if enc0 }
+
+   We're done with both the firewall/NAT and IPSec configiguration, so
+   let's move on to the next step - copying the keys.
+
+Step 3. Copy the isakmpd keys to each system
+
+   On Firewall A (1.2.3.4), copy /etc/isakmpd/private/local.pub from
+   Firewall B into /etc/isakmpd/pubkeys/ipv4/5.6.7.8.
+
+   Similarly, on Firewall B (5.6.7.8) copy /etc/isakmpd/private/local.pub
+   from Firewall A into /etc/isakmpd/pubkeys/ipv4/1.2.3.4.
+
+   The reader should note that while this configuration uses numeric IP
+   addresses, the configuration can also be done with fully qualified
+   domain names. To use domain names, simply copy the keys into the
+   /etc/isakmpd/pubkeys/fqdn directory, and use srcid and dstid keywords
+   in you /etc/ipsec.conf flow specifications.
+
+Step 4. Start the VPN
+
+   To start the VPN, use the following commands on both systems:
+
+isakmpd -K
+ipsecctl -f /etc/ipsec.conf
+
+   Congratualtions! You've just set up an IPSec VPN. You should be
+   pleased to know that the ipsecctl command has automatically configured
+   isakmpd and all its horrible config files, and it has chosen nice,
+   sensible, and secure defaults for you.
+
+   The -K option tells isakmpd to skip the intricate and rarely needed
+   policy configurations that would otherwise be required.
+
+   Now let's test the VPN. You should be able to ping nodes on 10.2.2.*
+   from nodes on 10.1.1.* and vice versa. If this doesn't work, try
+   starting up isakmpd with the debug option "isakmpd -K -d" to get more
+   diagnostics.
+
+Step 5. Set this up to start automatically at reboot
+
+   The default startup daemons on OpenBSD are found in the standard
+   rc.conf file. Edit /etc/rc.conf and change the isakmpd line to:
+
+isakmpd="-K"
+
+   Also ensure that 'PF=YES' in rc.conf as well, so that your pf
+   firewall/NAT is started at the next boot. Now we also want to ensure
+   that ipsecctl is started automatically. To the /etc/rc.local file, add
+   the following line:
+
+ipsecctl -f /etc/ipsec.conf
+
+   Finally, you may wish to edit your /etc/changelist on both Firewall A
+   and B to ensure that your new /etc/ipsec.conf configuration file is
+   listed. While this step is entirely optional, it ensures that any
+   changes to your IPSec configuration be tracked and emailed to the
+   administrator on a daily basis, as part of the daily mail script. For
+   this to work, you must have configured /etc/mail/aliases and have
+   given the root alias your own email address, and then run 'newaliases'
+   to commit the changes.
+
+   And there you have it. Isn't that nice and simple? If you are familiar
+   with pf and pfctl, ipsecctl will seem very easy and provides a very
+   similar interface. In other words, you can get the status of the ipsec
+   flows and associations with:
+
+ipsecctl -sa
+
+   And so on. Amazingly, it took more than a decade for someone to
+   finally provide a simple, straightforward configuration interface to
+   IPSec. It's now simple enough that we are finally able to recommend
+   IPSec to novice people so they can easily setup an IPSec VPN.
+
+Conclusion
+
+   In this short article we looked at how easy it is to setup an IPSec
+   VPN between two fresh OpenBSD installations. We started with two
+   default installations and changed a total of seven configuration
+   lines. Instead of taking days or weeks to get an IPSec VPN up and
+   running, ours was running in about four minutes.
+
+   Thanks Theo and the OpenBSD team for this, as we believe this is truly
+   a huge step forward for users everywhere who want to use IPSec.
+   Ipsecctl is what we have long needed.
+
+   As a personal note, I'd like to see other *BSD committers port this to
+   many other systems. Ipsecctl was specified by Matt Sauve-Frankel, and
+   coded by Hans-Joerg Hoexer. While ipsecctl doesn't appear to work
+   fully with IPv6 yet, support for this should be on the way. Also note
+   that there may be differences with how ipsecctl works on the CVS
+   versions of 3.8-current and 3.8-stable, and therefore it is
+   recommended that both firewalls in your IPSec configuration run the
+   same version of OpenBSD.
+   SecurityFocus accepts Infocus article submissions from members of the
+   security community. Articles are published based on outstanding merit
+   and level of technical detail. Full submission guidelines can be found
+   at [48]http://www.securityfocus.com/static/submissions.html.
+
+

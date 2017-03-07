@@ -1,0 +1,21 @@
+--- Makefile	Fri Mar 11 20:34:15 2005
++++ Makefile.new	Tue Aug 23 12:00:33 2005
+@@ -24,13 +24,13 @@
+ 	$(CC) -o vsftpd $(OBJS) $(LINK) $(LIBS)
+ 
+ install:
+-	if [ -x /usr/local/sbin ]; then \
+-		$(INSTALL) -m 755 vsftpd /usr/local/sbin/vsftpd; \
++	if [ -x /usr/sbin ]; then \
++		$(INSTALL) -m 755 vsftpd /usr/sbin/vsftpd; \
+ 	else \
+ 		$(INSTALL) -m 755 vsftpd /usr/sbin/vsftpd; fi
+-	if [ -x /usr/local/man ]; then \
+-		$(INSTALL) -m 644 vsftpd.8 /usr/local/man/man8/vsftpd.8; \
+-		$(INSTALL) -m 644 vsftpd.conf.5 /usr/local/man/man5/vsftpd.conf.5; \
++	if [ -x /usr/share/man ]; then \
++		$(INSTALL) -m 644 vsftpd.8 /usr/share/man/man8/vsftpd.8; \
++		$(INSTALL) -m 644 vsftpd.conf.5 /usr/share/man/man5/vsftpd.conf.5; \
+ 	elif [ -x /usr/share/man ]; then \
+ 		$(INSTALL) -m 644 vsftpd.8 /usr/share/man/man8/vsftpd.8; \
+ 		$(INSTALL) -m 644 vsftpd.conf.5 /usr/share/man/man5/vsftpd.conf.5; \

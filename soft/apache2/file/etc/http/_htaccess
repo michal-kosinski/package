@@ -1,0 +1,18 @@
+php_flag display_errors Off
+php_flag magic_quotes_gpc On
+php_flag register_globals On
+php_value error_reporting E_ALL
+php_value memory_limit 256M
+php_value post_max_size 8M
+
+AuthType Basic
+AuthName "Tajny katalog na haslo"
+AuthUserFile /home/www/www.example.com/password.file
+Satisfy All
+Require valid-user
+
+SetEnvIf User-Agent ^Googlebot/2\.1 let_me_in
+Order Deny,Allow
+Deny from all
+Allow from env=let_me_in
+

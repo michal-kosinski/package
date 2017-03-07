@@ -1,0 +1,10 @@
+[admin]
+    password = mypass
+    allowfrom = localhost
+    actions = SET
+    instcmds = ALL
+
+[monuser]
+    password = mypass
+    allowfrom = localhost
+    upsmon master

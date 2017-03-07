@@ -1,0 +1,119 @@
+diff -dur webmail/inc/config.languages.php webmail.1/inc/config.languages.php
+--- webmail/inc/config.languages.php	Mon Jul 18 16:43:02 2005
++++ webmail.1/inc/config.languages.php	Thu Mar  9 14:13:55 2006
+@@ -3,11 +3,11 @@
+ # Language & themes settings
+ ########################################################################
+ 
+-$allow_user_change_theme			= yes;
++$allow_user_change_theme			= no;
+ $default_theme						= 'default';
+ 
+-$allow_user_change_language			= yes; 
+-$default_language					= 'pt_BR';
++$allow_user_change_language			= no; 
++$default_language					= 'pl';
+ 
+ $themes['default'] = Array(
+ 	"name" 		=> "UebiMiau Default",
+@@ -101,7 +101,7 @@
+ 	"path" 		=> "nb"
+ );
+ 
+-$languages['bg'] = Array(
++$languages['pl'] = Array(
+ 	"name" 		=> "Polish",
+ 	"path" 		=> "pl"
+ );
+diff -dur webmail/inc/config.php webmail.1/inc/config.php
+--- webmail/inc/config.php	Mon Feb 13 16:41:02 2006
++++ webmail.1/inc/config.php	Thu Mar  9 14:15:32 2006
+@@ -46,7 +46,7 @@
+ # eg. "server1;server2;server3"   -> specify main and backup server
+ ########################################################################
+ 
+-$smtp_server = "localhost";  #YOU NEED CHANGE IT !!
++$smtp_server = "127.0.0.1";  #YOU NEED CHANGE IT !!
+ 
+ 
+ ########################################################################
+@@ -60,7 +60,7 @@
+ # In order to keep you system fast, use values better than 5MB
+ # If you need disable it, set the value to 0 or leave it blank
+ ########################################################################
+-$quota_limit = 0;  //  in KB, eg. 4096 Kb = 4MB
++$quota_limit = 1024000;  //  in KB, eg. 4096 Kb = 4MB
+ 
+ 
+ ########################################################################
+@@ -156,11 +156,11 @@
+ 
+ 
+ $mail_servers[] = Array( //sample using POP3
+-	"domain" 		=> "uebimiaiu.org", 
+-	"server" 		=> "localhost", 
+-	"login_type" 	=> "%user%@%domain%",
+-	"protocol"		=> "IMAP",
+-	"port"			=> "143",
++	"domain" 		=> "", 
++	"server" 		=> "127.0.0.1", 
++	"login_type" 	=> "%user%",
++	"protocol"		=> "pop3",
++	"port"			=> "110",
+ 	"folder_prefix"	=> "INBOX." //not used for pop3
+ );
+ 
+@@ -182,8 +182,8 @@
+ # the default mail server for all domains
+ ########################################################################
+ 
+-$default_mail_server 	= "mail.YOUR-UNIQUE-SERVER.com.br";
+-$one_for_all_login_type	= "%user%@%domain%";
++$default_mail_server 	= "127.0.0.1";
++$one_for_all_login_type	= "%user%";
+ $default_protocol		= "pop3";
+ $default_port			= "110";
+ $default_folder_prefix	= "";
+@@ -223,11 +223,7 @@
+ # Add a "footer" to sent mails
+ ########################################################################
+ 
+-$footer = "
+-
+-________________________________________________
+-Message sent using $appname $appversion
+-";
++$footer = "";
+ 
+ ########################################################################
+ # Enable debug :)
+diff -dur webmail/inc/config.security.php webmail.1/inc/config.security.php
+--- webmail/inc/config.security.php	Mon Feb 13 16:33:02 2006
++++ webmail.1/inc/config.security.php	Thu Mar  9 14:13:35 2006
+@@ -26,7 +26,7 @@
+ # Session timeout for inactivity
+ ########################################################################
+ 
+-$idle_timeout = 10; //minutes
++$idle_timeout = 30; //minutes
+ 
+ ########################################################################
+ # Session is valid only for the same ip address. If different, will be kicked
+diff -dur webmail/inc/inc.php webmail.1/inc/inc.php
+--- webmail/inc/inc.php	Mon Feb 13 16:36:02 2006
++++ webmail.1/inc/inc.php	Thu Mar  9 14:16:20 2006
+@@ -151,10 +151,10 @@
+ Don't remove the fallowing lines, or you will be problems with browser's cache 
+ */
+ 
+-Header("Expires: Wed, 11 Nov 1998 11:11:11 GMT\r\n".
+-"Cache-Control: no-cache\r\n".
+-"Cache-Control: must-revalidate");
+-
++Header("Expires: Wed, 11 Nov 1998 11:11:11 GMT").
++Header("Cache-Control: no-cache").
++Header("Cache-Control: must-revalidate");
++
+ $nocache = "
+ <META HTTP-EQUIV=\"Cache-Control\" CONTENT=\"no-cache\">
+ <META HTTP-EQUIV=\"Expires\" CONTENT=\"-1\">";

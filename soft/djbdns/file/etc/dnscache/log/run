@@ -1,0 +1,13 @@
+#!/bin/sh
+exec \
+setuidgid named \
+envdir ./env \
+sh -c '
+    exec \
+    multilog \
+	t \
+	s$MAXFILESIZE \
+	n$MAXLOGFILES \
+	!$PROCESSOR \
+	/var/log/dnscache
+'

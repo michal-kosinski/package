@@ -1,0 +1,3 @@
+grep http /var/log/audit/audit.log|audit2allow -M oraclebufferoverflowallow
+semodule -i oraclebufferoverflowallow.pp
+semodule -r oraclebufferoverflowallow

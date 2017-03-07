@@ -1,0 +1,12 @@
+diff -dur nagios-plugins-1.4.10/gl/regex_internal.h nagios-plugins-1.4.10.0/gl/regex_internal.h
+--- nagios-plugins-1.4.10/gl/regex_internal.h	Wed Jan 24 23:47:25 2007
++++ nagios-plugins-1.4.10.0/gl/regex_internal.h	Thu Oct  4 20:52:40 2007
+@@ -463,8 +463,6 @@
+ #define re_string_skip_bytes(pstr,idx) ((pstr)->cur_idx += (idx))
+ #define re_string_set_index(pstr,idx) ((pstr)->cur_idx = (idx))
+ 
+-#include <alloca.h>
+-
+ #ifndef _LIBC
+ # if HAVE_ALLOCA
+ /* The OS usually guarantees only one guard page at the bottom of the stack,

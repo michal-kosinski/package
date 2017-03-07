@@ -1,0 +1,105 @@
+#
+# This is PXE (Preboot Execution Environment) boot from network with NFS filesystem example for OpenBSD
+#
+# server name: gumis (192.168.228.1)
+# client name: sbox  (192.168.228.101)
+# nfs root for sbox: /exports/sbox/root
+# nfs swap for sbox: /exports/sbox/swap
+
+1. cat /etc/rc.conf |egrep "bootparamd_flags|dhcpd|nfs|rarpd|portmap|inetd"
+rarpd_flags="-a"        # for normal use: "-a"
+bootparamd_flags=""     # for normal use: ""
+dhcpd_flags=""          # for normal use: ""
+nfs_server=YES          # see sysctl.conf for nfs client configuration
+portmap=YES             # Note: inetd(8) rpc services need portmap too
+inetd=YES               # almost always needed
+nfsd_flags="-tun 4"	# Crank the 4 for a busy NFS fileserver
+
+2. cat /etc/inetd.conf|grep tftp
+tftp            dgram   udp     wait    root    /usr/libexec/tftpd      tftpd -s /tftpboot
+
+3.
+cd /usr/src/sys/arch/i386/conf && config DISKLESS && cd ../compile/DISKLESS && make depend bsd && cp bsd /tftpboot/bsd
+
+4. ls -l /tftpboot
+-rw-r--r--  1 root  wheel  3501571 Feb 21 22:14 bsd
+-rw-r--r--  1 root  wheel    53848 Sep 17  2004 pxeboot
+
+5. cat /etc/exports
+/exports/sbox    -maproot=root   -alldirs        -network 192.168.228    -mask 255.255.255.0
+/exports/sbox    -maproot=root   -alldirs        sbox
+
+6. 
+wget -r -np http://ftp.sunet.se/pub/OpenBSD/3.8/i386/
+for a in {base,comp,etc,game,man,misc}*.tgz ; do gtar zxfp $a -C /exports/sbox/root ; done
+dd if=/dev/zero of=/exports/sbox/swap bs=256k count=1024
+
+7. ls -l /exports/sbox
+drwxr-xr-x  14 root  wheel        512 Feb 21 16:32 root
+-rw-r--r--   1 root  wheel  268435456 Feb 21 16:34 swap
+
+8. cat /etc/bootparams
+sbox root=gumis:/exports/sbox/root swap=gumis:/exports/sbox/swap
+
+9. cat /etc/ethers
+00:08:9b:9b:77:e6 192.168.228.101
+
+10. cat /etc/hosts
+127.0.0.1       localhost
+192.168.228.1   gumis
+192.168.228.101 sbox
+
+11. cat /etc/dhcpd.conf
+host sbox
+{
+        hardware ethernet 00:08:9b:9b:77:e6;
+        fixed-address 192.168.228.101;
+        next-server 192.168.228.1;
+        option host-name "sbox";
+        filename "pxeboot";
+        option root-path "192.168.228.1:/exports/sbox/root";
+}
+
+12. cat /exports/sbox/root/etc/fstab
+gumis:/exports/sbox/root /       nfs     rw,tcp,soft,intr      0       0
+
+rw            mount filesystem read-write
+ro            mount filesystem read-only
+bg            if mount fails, keep trying in the background
+hard          if server goes down, make operations accessing it BLOCK
+soft          if server goes down, allow operations accessing it to FAIL with an error
+retrans=N     number of times to retry request before FAILING (must also specify 'soft')
+timeo=N       timeout period for a given request (in TENTHS of seconds)
+intr          allow users to INTERRUPT blocked requests (making then return an error)
+rsize=N       set the read buffer size (in bytes)
+wsize=N       set the write buffer size (in bytes)
+
+13. cat /exports/sbox/root/etc/myname
+sbox
+
+14. cat /exports/sbox/root/etc/hostname.rl0
+inet 192.168.228.101 255.255.255.0 NONE
+
+15. cat /exports/sbox/root/etc/hosts
+127.0.0.1       localhost
+192.168.228.1   gumis
+192.168.228.101 sbox
+
+16. rpcinfo -p
+   program vers proto   port
+    100000    2   tcp    111  portmapper
+    100000    2   udp    111  portmapper
+    100005    1   udp    660  mountd
+    100005    3   udp    660  mountd
+    100005    1   tcp    752  mountd
+    100005    3   tcp    752  mountd
+    100003    2   udp   2049  nfs
+    100003    3   udp   2049  nfs
+    100003    2   tcp   2049  nfs
+    100003    3   tcp   2049  nfs
+    100026    1   udp    614  bootparam
+
+17. debug :-)
+grep 50 /usr/src/sys/sys/errno.h
+grep 52 /usr/src/sys/sys/errno.h
+

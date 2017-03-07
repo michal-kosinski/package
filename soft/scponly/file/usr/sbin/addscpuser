@@ -1,0 +1,102 @@
+#!/bin/sh
+
+LIBC="libc.so.42.0"
+LIBGSSAPI="libgssapi.so.5.0"
+LIBKRB5="libkrb5.so.16.0"
+LIBWRAP="libwrap.so.4.0"
+LIBUTIL="libutil.so.11.0"
+
+if [ "$1" = "" ]; then
+	echo "Usage: $0 <username>"
+	exit 1
+fi
+
+if [ ! -r /usr/lib/$LIBC ]; then
+	echo "Incorrect libc.so version"
+	exit 1
+fi
+
+if [ ! -r /usr/lib/$LIBGSSAPI ]; then
+        echo "Incorrect libgssapi.so version"
+	exit 1
+fi
+
+if [ ! -r /usr/lib/$LIBKRB5 ]; then
+        echo "Incorrect libkrb5.so version"
+	exit 1
+fi
+
+if [ ! -r /usr/lib/$LIBWRAP ]; then
+        echo "Incorrect libwrap.so version"
+	exit 1
+fi
+
+if [ ! -r /usr/lib/$LIBUTIL ]; then
+        echo "Incorrect libutil.so version"
+	exit 1
+fi
+
+if [ ! -x /home/chroot ]; then
+        mkdir /home/chroot
+fi
+
+groupadd $1
+useradd -g $1 -s /usr/sbin/scponlyc -d /home/chroot/$1//home/$1 $1 2>/dev/null
+passwd $1
+
+mkdir /home/chroot/$1
+
+mkdir /home/chroot/$1/bin
+cd /home/chroot/$1/bin
+ cp /bin/echo .
+ cp /bin/chmod .
+ cp /bin/ln .
+ cp /bin/ls .
+ cp /bin/mkdir .
+ cp /bin/mv .
+ cp /bin/rm .
+ cp /bin/rmdir .
+ cp /bin/pwd .
+
+mkdir /home/chroot/$1/home
+cd /home/chroot/$1/home
+   mkdir $1
+   mkdir $1/incoming
+   chown $1:$1 $1/incoming
+
+mkdir /home/chroot/$1/usr
+
+mkdir /home/chroot/$1/usr/bin
+cd /home/chroot/$1/usr/bin
+ cp /usr/bin/id .
+ cp /usr/bin/scp .
+ cp /usr/bin/sftp .
+
+mkdir /home/chroot/$1/usr/lib
+cd /home/chroot/$1/usr/lib
+ cp /usr/lib/$LIBC .
+ cp /usr/lib/$LIBGSSAPI .
+ cp /usr/lib/$LIBKRB5 .
+ cp /usr/lib/$LIBWRAP .
+ cp /usr/lib/$LIBUTIL .
+
+mkdir /home/chroot/$1/usr/libexec
+cd /home/chroot/$1/usr/libexec
+ cp /usr/libexec/sftp-server .
+ cp /usr/libexec/ld.so .
+
+mkdir /home/chroot/$1/dev
+cd /home/chroot/$1/dev
+ mknod null c 2 2
+ chmod a+w null
+
+mkdir /home/chroot/$1/etc
+cd /home/chroot/$1/etc
+ cp /etc/master.passwd .
+ cp /etc/group .
+ grep $1 master.passwd > master.passwd.tmp && mv master.passwd.tmp master.passwd
+ echo "`cat master.passwd |cut -d: -f1-8`::" > master.passwd.tmp && mv master.passwd.tmp master.passwd
+ grep $1 group > group.tmp && mv group.tmp group
+ pwd_mkdb -p -d /home/chroot/$1/etc master.passwd
+
+cp /usr/bin/scponly-groups /home/chroot/$1/usr/bin/groups

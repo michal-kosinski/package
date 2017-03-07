@@ -1,0 +1,11 @@
+--- modsecurity-apache_2.1.1/apache2/Makefile	Wed Mar  7 17:24:45 2007
++++ modsecurity-apache_2.1.1.1/apache2/Makefile	Sun Apr 15 15:39:08 2007
+@@ -17,7 +17,7 @@
+ #     Debian - /usr/share/apache2  (apache2-prefork-dev or apache2-threaded-dev
+ #                                   needed, depending on your installation type)
+ #
+-top_dir      = /apps/apache22
++top_dir      = /usr/share/httpd
+ 
+ top_srcdir   = ${top_dir}
+ top_builddir = ${top_dir}

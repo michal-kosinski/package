@@ -1,0 +1,63 @@
+Only in ssl.ca-0.1.1: ca.key
+diff -dur ssl.ca-0.1/new-root-ca.sh ssl.ca-0.1.1/new-root-ca.sh
+--- ssl.ca-0.1/new-root-ca.sh	Mon Apr 24 14:23:14 2000
++++ ssl.ca-0.1.1/new-root-ca.sh	Mon Mar  6 23:33:19 2006
+@@ -23,20 +23,22 @@
+ req_extensions			= v3_req
+ [ req_distinguished_name ]
+ countryName			= Country Name (2 letter code)
+-countryName_default		= MY
++countryName_default		= PL
+ countryName_min			= 2
+ countryName_max			= 2
+ stateOrProvinceName		= State or Province Name (full name)
+-stateOrProvinceName_default	= Perak
++stateOrProvinceName_default	= Mazowieckie
+ localityName			= Locality Name (eg, city)
+-localityName_default		= Sitiawan
++localityName_default		= Warszawa
+ 0.organizationName		= Organization Name (eg, company)
+-0.organizationName_default	= My Directory Sdn Bhd
++0.organizationName_default	= VOID SYSTEMS
+ organizationalUnitName		= Organizational Unit Name (eg, section)
+-organizationalUnitName_default	= Certification Services Division
++organizationalUnitName_default	= VOID SYSTEMS
+ commonName			= Common Name (eg, MD Root CA)
++commonName_default		= VOID SYSTEMS
+ commonName_max			= 64
+ emailAddress			= Email Address
++emailAddress_default		= root@`hostname`
+ emailAddress_max		= 40
+ [ v3_ca ]
+ basicConstraints		= critical,CA:true
+diff -dur ssl.ca-0.1/new-server-cert.sh ssl.ca-0.1.1/new-server-cert.sh
+--- ssl.ca-0.1/new-server-cert.sh	Mon Apr 24 12:07:44 2000
++++ ssl.ca-0.1.1/new-server-cert.sh	Mon Mar  6 23:34:50 2006
+@@ -27,20 +27,22 @@
+ req_extensions			= v3_req
+ [ req_distinguished_name ]
+ countryName			= Country Name (2 letter code)
+-countryName_default		= MY
++countryName_default		= PL
+ countryName_min			= 2
+ countryName_max			= 2
+ stateOrProvinceName		= State or Province Name (full name)
+-stateOrProvinceName_default	= Perak
++stateOrProvinceName_default	= Mazowieckie
+ localityName			= Locality Name (eg, city)
+-localityName_default		= Sitiawan
++localityName_default		= Warszawa
+ 0.organizationName		= Organization Name (eg, company)
+-0.organizationName_default	= My Directory Sdn Bhd
++0.organizationName_default	= VOID SYSTEMS
+ organizationalUnitName		= Organizational Unit Name (eg, section)
+-organizationalUnitName_default	= Secure Web Server
++organizationalUnitName_default	= VOID SYSTEMS
+ commonName			= Common Name (eg, www.domain.com)
++commonName_default		= `hostname`
+ commonName_max			= 64
+ emailAddress			= Email Address
++emailAddress_default		= root@`hostname`
+ emailAddress_max		= 40
+ [ v3_req ]
+ nsCertType			= server

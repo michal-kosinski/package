@@ -1,0 +1,231 @@
+diff -dur php-5.2.0/ext/standard/info.c php-5.2.0.1/ext/standard/info.c
+--- php-5.2.0/ext/standard/info.c	Thu Sep 14 10:01:48 2006
++++ php-5.2.0.1/ext/standard/info.c	Tue Nov  7 19:49:15 2006
+@@ -445,58 +445,59 @@
+ 		}	
+ 		php_info_print_box_end();
+ 		php_info_print_table_start();
+-		php_info_print_table_row(2, "System", php_uname );
+-		php_info_print_table_row(2, "Build Date", __DATE__ " " __TIME__ );
+-#ifdef CONFIGURE_COMMAND
+-		php_info_print_table_row(2, "Configure Command", CONFIGURE_COMMAND );
+-#endif
+-		if (sapi_module.pretty_name) {
+-			php_info_print_table_row(2, "Server API", sapi_module.pretty_name );
+-		}
++//		php_info_print_table_row(2, "System", php_uname );
++//		php_info_print_table_row(2, "Build Date", __DATE__ " " __TIME__ );
++//#ifdef CONFIGURE_COMMAND
++//		php_info_print_table_row(2, "Configure Command", CONFIGURE_COMMAND );
++//#endif
++//		if (sapi_module.pretty_name) {
++//			php_info_print_table_row(2, "Server API", sapi_module.pretty_name );
++//		}
+ 
+-#ifdef VIRTUAL_DIR
+-		php_info_print_table_row(2, "Virtual Directory Support", "enabled" );
+-#else
+-		php_info_print_table_row(2, "Virtual Directory Support", "disabled" );
+-#endif
++//#ifdef VIRTUAL_DIR
++//		php_info_print_table_row(2, "Virtual Directory Support", "enabled" );
++//#else
++//		php_info_print_table_row(2, "Virtual Directory Support", "disabled" );
++//#endif
+ 
+-		php_info_print_table_row(2, "Configuration File (php.ini) Path", php_ini_opened_path?php_ini_opened_path:PHP_CONFIG_FILE_PATH);
+-
+-		if (strlen(PHP_CONFIG_FILE_SCAN_DIR)) {
+-			php_info_print_table_row(2, "Scan this dir for additional .ini files", PHP_CONFIG_FILE_SCAN_DIR);
+-			if (php_ini_scanned_files) {
+-				php_info_print_table_row(2, "additional .ini files parsed", php_ini_scanned_files);
+-			}
+-		}
+-		
+-		snprintf(temp_api, sizeof(temp_api), "%d", PHP_API_VERSION);
+-		php_info_print_table_row(2, "PHP API", temp_api);
+-
+-		snprintf(temp_api, sizeof(temp_api), "%d", ZEND_MODULE_API_NO);
+-		php_info_print_table_row(2, "PHP Extension", temp_api);
+-
+-		snprintf(temp_api, sizeof(temp_api), "%d", ZEND_EXTENSION_API_NO);
+-		php_info_print_table_row(2, "Zend Extension", temp_api);
+-
+-#if ZEND_DEBUG
+-		php_info_print_table_row(2, "Debug Build", "yes" );
+-#else
+-		php_info_print_table_row(2, "Debug Build", "no" );
+-#endif
+-
+-#ifdef ZTS
+-		php_info_print_table_row(2, "Thread Safety", "enabled" );
+-#else
+-		php_info_print_table_row(2, "Thread Safety", "disabled" );
+-#endif
+-
+-		php_info_print_table_row(2, "Zend Memory Manager", is_zend_mm(TSRMLS_C) ? "enabled" : "disabled" );
+-
+-#if HAVE_IPV6
+-		php_info_print_table_row(2, "IPv6 Support", "enabled" );
+-#else
+-		php_info_print_table_row(2, "IPv6 Support", "disabled" );
+-#endif
++//		php_info_print_table_row(2, "Configuration File (php.ini) Path", php_ini_opened_path?php_ini_opened_path:PHP_CONFIG_FILE_PATH);
++//
++//		if (strlen(PHP_CONFIG_FILE_SCAN_DIR)) {
++//			php_info_print_table_row(2, "Scan this dir for additional .ini files", PHP_CONFIG_FILE_SCAN_DIR);
++//			if (php_ini_scanned_files) {
++//				php_info_print_table_row(2, "additional .ini files parsed", php_ini_scanned_files);
++//			}
++//		}
++//		
++//		snprintf(temp_api, sizeof(temp_api), "%d", PHP_API_VERSION);
++//		php_info_print_table_row(2, "PHP API", temp_api);
++//
++//		snprintf(temp_api, sizeof(temp_api), "%d", ZEND_MODULE_API_NO);
++//		php_info_print_table_row(2, "PHP Extension", temp_api);
++//
++//		snprintf(temp_api, sizeof(temp_api), "%d", ZEND_EXTENSION_API_NO);
++//		php_info_print_table_row(2, "Zend Extension", temp_api);
++//
++//#if ZEND_DEBUG
++//		php_info_print_table_row(2, "Debug Build", "yes" );
++//#else
++//		php_info_print_table_row(2, "Debug Build", "no" );
++//#endif
++//
++//#ifdef ZTS
++//		php_info_print_table_row(2, "Thread Safety", "enabled" );
++//#else
++//		php_info_print_table_row(2, "Thread Safety", "disabled" );
++//#endif
++//
++//		php_info_print_table_row(2, "Zend Memory Manager", is_zend_mm(TSRMLS_C) ? "enabled" : "disabled" );
++//
++//#if HAVE_IPV6
++//		php_info_print_table_row(2, "IPv6 Support", "enabled" );
++//#else
++//		php_info_print_table_row(2, "IPv6 Support", "disabled" );
++//#endif
++//
+ 		{
+ 			HashTable *url_stream_wrappers_hash;
+ 			char *stream_protocol, *stream_protocols_buf = NULL;
+@@ -682,23 +683,23 @@
+ 		zend_hash_destroy(&sorted_registry);
+ 	}
+ 
+-	if (flag & PHP_INFO_ENVIRONMENT) {
+-		SECTION("Environment");
+-		php_info_print_table_start();
+-		php_info_print_table_header(2, "Variable", "Value");
+-		for (env=environ; env!=NULL && *env !=NULL; env++) {
+-			tmp1 = estrdup(*env);
+-			if (!(tmp2=strchr(tmp1,'='))) { /* malformed entry? */
+-				efree(tmp1);
+-				continue;
+-			}
+-			*tmp2 = 0;
+-			tmp2++;
+-			php_info_print_table_row(2, tmp1, tmp2);
+-			efree(tmp1);
+-		}
+-		php_info_print_table_end();
+-	}
++//	if (flag & PHP_INFO_ENVIRONMENT) {
++//		SECTION("Environment");
++//		php_info_print_table_start();
++//		php_info_print_table_header(2, "Variable", "Value");
++//		for (env=environ; env!=NULL && *env !=NULL; env++) {
++//			tmp1 = estrdup(*env);
++//			if (!(tmp2=strchr(tmp1,'='))) { /* malformed entry? */
++//				efree(tmp1);
++//				continue;
++//			}
++//			*tmp2 = 0;
++//			tmp2++;
++//			php_info_print_table_row(2, tmp1, tmp2);
++//			efree(tmp1);
++//		}
++//		php_info_print_table_end();
++//	}
+ 
+ 	if (flag & PHP_INFO_VARIABLES) {
+ 		zval **data;
+@@ -725,7 +726,7 @@
+ 		php_print_gpcse_array("_FILES", sizeof("_FILES")-1 TSRMLS_CC);
+ 		php_print_gpcse_array("_COOKIE", sizeof("_COOKIE")-1 TSRMLS_CC);
+ 		php_print_gpcse_array("_SERVER", sizeof("_SERVER")-1 TSRMLS_CC);
+-		php_print_gpcse_array("_ENV", sizeof("_ENV")-1 TSRMLS_CC);
++//		php_print_gpcse_array("_ENV", sizeof("_ENV")-1 TSRMLS_CC);
+ 		php_info_print_table_end();
+ 	}
+ 
+diff -dur php-5.2.0/sapi/apache2filter/apache_config.c php-5.2.0.1/sapi/apache2filter/apache_config.c
+--- php-5.2.0/sapi/apache2filter/apache_config.c	Fri Jun  9 18:29:35 2006
++++ php-5.2.0.1/sapi/apache2filter/apache_config.c	Tue Nov  7 19:44:02 2006
+@@ -189,13 +189,13 @@
+ 
+ const command_rec php_dir_cmds[] =
+ {
+-	AP_INIT_TAKE2("php_value", php_apache_value_handler, NULL, OR_OPTIONS,
++	AP_INIT_TAKE2("php5_value", php_apache_value_handler, NULL, OR_OPTIONS,
+                   "PHP Value Modifier"),
+-	AP_INIT_TAKE2("php_flag", php_apache_flag_handler, NULL, OR_OPTIONS,
++	AP_INIT_TAKE2("php5_flag", php_apache_flag_handler, NULL, OR_OPTIONS,
+                   "PHP Flag Modifier"),
+-	AP_INIT_TAKE2("php_admin_value", php_apache_admin_value_handler, NULL, 
++	AP_INIT_TAKE2("php5_admin_value", php_apache_admin_value_handler, NULL, 
+ 			ACCESS_CONF|RSRC_CONF, "PHP Value Modifier (Admin)"),
+-	AP_INIT_TAKE2("php_admin_flag", php_apache_admin_flag_handler, NULL, 
++	AP_INIT_TAKE2("php5_admin_flag", php_apache_admin_flag_handler, NULL, 
+ 			ACCESS_CONF|RSRC_CONF, "PHP Flag Modifier (Admin)"),
+ 	AP_INIT_TAKE1("PHPINIDir", php_apache_phpini_set, NULL, RSRC_CONF,
+                   "Directory containing the php.ini file"),
+diff -dur php-5.2.0/sapi/apache2filter/sapi_apache2.c php-5.2.0.1/sapi/apache2filter/sapi_apache2.c
+--- php-5.2.0/sapi/apache2filter/sapi_apache2.c	Tue Jul 25 15:40:05 2006
++++ php-5.2.0.1/sapi/apache2filter/sapi_apache2.c	Tue Nov  7 19:44:02 2006
+@@ -641,9 +641,9 @@
+ 
+ static void php_insert_filter(request_rec *r)
+ {
+-	int content_type_len = strlen("application/x-httpd-php");
++	int content_type_len = strlen("application/x-httpd-php5");
+ 
+-	if (r->content_type && !strncmp(r->content_type, "application/x-httpd-php", content_type_len-1)) {
++	if (r->content_type && !strncmp(r->content_type, "application/x-httpd-php5", content_type_len-1)) {
+ 		if (r->content_type[content_type_len] == '\0' || !strncmp(r->content_type+content_type_len, "-source", sizeof("-source"))) { 
+ 			php_add_filter(r, r->output_filters);
+ 			php_add_filter(r, r->input_filters);
+diff -dur php-5.2.0/sapi/apache2handler/apache_config.c php-5.2.0.1/sapi/apache2handler/apache_config.c
+--- php-5.2.0/sapi/apache2handler/apache_config.c	Fri Jun  9 17:13:39 2006
++++ php-5.2.0.1/sapi/apache2handler/apache_config.c	Tue Nov  7 19:44:02 2006
+@@ -178,10 +178,10 @@
+ 
+ const command_rec php_dir_cmds[] =
+ {
+-	AP_INIT_TAKE2("php_value", php_apache_value_handler, NULL, OR_OPTIONS, "PHP Value Modifier"),
+-	AP_INIT_TAKE2("php_flag", php_apache_flag_handler, NULL, OR_OPTIONS, "PHP Flag Modifier"),
+-	AP_INIT_TAKE2("php_admin_value", php_apache_admin_value_handler, NULL, ACCESS_CONF|RSRC_CONF, "PHP Value Modifier (Admin)"),
+-	AP_INIT_TAKE2("php_admin_flag", php_apache_admin_flag_handler, NULL, ACCESS_CONF|RSRC_CONF, "PHP Flag Modifier (Admin)"),
++	AP_INIT_TAKE2("php5_value", php_apache_value_handler, NULL, OR_OPTIONS, "PHP Value Modifier"),
++	AP_INIT_TAKE2("php5_flag", php_apache_flag_handler, NULL, OR_OPTIONS, "PHP Flag Modifier"),
++	AP_INIT_TAKE2("php5_admin_value", php_apache_admin_value_handler, NULL, ACCESS_CONF|RSRC_CONF, "PHP Value Modifier (Admin)"),
++	AP_INIT_TAKE2("php5_admin_flag", php_apache_admin_flag_handler, NULL, ACCESS_CONF|RSRC_CONF, "PHP Flag Modifier (Admin)"),
+ 	AP_INIT_TAKE1("PHPINIDir", php_apache_phpini_set, NULL, RSRC_CONF, "Directory containing the php.ini file"),
+ 	{NULL}
+ };
+diff -dur php-5.2.0/sapi/apache2handler/sapi_apache2.c php-5.2.0.1/sapi/apache2handler/sapi_apache2.c
+--- php-5.2.0/sapi/apache2handler/sapi_apache2.c	Thu Aug 10 15:43:18 2006
++++ php-5.2.0.1/sapi/apache2handler/sapi_apache2.c	Tue Nov  7 19:44:02 2006
+@@ -59,8 +59,8 @@
+  */
+ #undef shutdown
+ 
+-#define PHP_MAGIC_TYPE "application/x-httpd-php"
+-#define PHP_SOURCE_MAGIC_TYPE "application/x-httpd-php-source"
++#define PHP_MAGIC_TYPE "application/x-httpd-php5"
++#define PHP_SOURCE_MAGIC_TYPE "application/x-httpd-php5-source"
+ #define PHP_SCRIPT "php5-script"
+ 
+ /* A way to specify the location of the php.ini dir in an apache directive */

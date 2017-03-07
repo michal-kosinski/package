@@ -1,0 +1,47 @@
+### errors
+
+// Report simple running errors
+error_reporting(E_ERROR | E_WARNING | E_PARSE);
+
+// Reporting E_NOTICE can be good too (to report uninitialized
+// variables or catch variable name misspellings ...)
+error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
+
+// Report all errors except E_NOTICE
+// This is the default value set in php.ini
+error_reporting(E_ALL ^ E_NOTICE);
+
+// Report all PHP errors (bitwise 63 may be used in PHP 3)
+error_reporting(E_ALL);
+
+### Table 1. error_reporting() level constants and bit values
+
+value	constant	
+1	E_ERROR 	
+2	E_WARNING 	
+4	E_PARSE 	
+8	E_NOTICE 	
+16	E_CORE_ERROR 	
+32	E_CORE_WARNING 	
+64	E_COMPILE_ERROR 	
+128	E_COMPILE_WARNING 	
+256	E_USER_ERROR 	
+512	E_USER_WARNING 	
+1024	E_USER_NOTICE 	
+2047	E_ALL 	
+2048	E_STRICT
+
+### php.ini
+
+php_value name value 
+Sets the value of the specified directive. Can be used only with PHP_INI_ALL and PHP_INI_PERDIR type directives. To clear a previously set value use none as the value. 
+Note: Don't use php_value to set boolean values. php_flag (see below) should be used instead. 
+
+php_flag name on|off 
+Used to set a boolean configuration directive. Can be used only with PHP_INI_ALL and PHP_INI_PERDIR type directives. 
+
+php_admin_value name value 
+Sets the value of the specified directive. This can not be used in .htaccess files. Any directive type set with php_admin_value can not be overridden by .htaccess or virtualhost directives. To clear a previously set value use none as the value. 
+
+php_admin_flag name on|off 
+Used to set a boolean configuration directive. This can not be used in .htaccess files. Any directive type set with php_admin_flag can not be overridden by .htaccess or virtualhost directives.

@@ -1,0 +1,22 @@
+--- vnconfig.c	Thu Apr 27 17:24:46 2006
++++ vnconfig.c.new	Thu Apr 27 17:30:38 2006
+@@ -72,7 +72,7 @@
+ 	int ch, rv, action = VND_CONFIG;
+ 	char *key = NULL;
+ 
+-	while ((ch = getopt(argc, argv, "cluvk")) != -1) {
++	while ((ch = getopt(argc, argv, "cluvks")) != -1) {
+ 		switch (ch) {
+ 		case 'c':
+ 			action = VND_CONFIG;
+@@ -89,6 +89,10 @@
+ 		case 'k':
+ 			key = getpass("Encryption key: ");
+ 			break;
++		case 's':
++		  key = malloc(50);
++		  fgets(key,49,stdin);
++		  break;
+ 		default:
+ 			usage();
+ 			/* NOTREACHED */

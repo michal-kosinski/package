@@ -1,0 +1,12 @@
+--- .profile	Sun Mar 20 07:44:32 2005
++++ .profile.new	Tue Jul 26 14:04:22 2005
+@@ -8,6 +8,6 @@
+ export HOME
+ umask 022
+ 
+-if [ -x /usr/bin/tset ]; then
+-	eval `/usr/bin/tset -sQ \?$TERM`
+-fi
++#if [ -x /usr/bin/tset ]; then
++#	eval `/usr/bin/tset -sQ \?$TERM`
++#fi
